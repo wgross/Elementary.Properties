@@ -15,7 +15,7 @@ namespace Elementary.Properties.Performance.Test
 
         private readonly Action<Data, int> reflectionSetter = ReflectionSetterFactory.Of<Data, int>(i => i.Property);
 
-        //private readonly Func<Data, int> expressionGetter = ExpressionGetterFactory.Of<Data, int>(i => i.Property).Compile();
+        private readonly Action<Data, int> expressionSetter = ExpressionSetterFactory.Of<Data, int>(i => i.Property).Compile();
 
         [Benchmark]
         public void Set_property_value_with_reflection()
@@ -23,11 +23,11 @@ namespace Elementary.Properties.Performance.Test
             this.reflectionSetter(data, 1);
         }
 
-        //[Benchmark]
-        //public void Get_property_value_with_compiled_expression()
-        //{
-        //    var result = this.expressionGetter(data);
-        //}
+        [Benchmark]
+        public void Set_property_value_with_compiled_expression()
+        {
+            this.expressionSetter(data, 1);
+        }
 
         [Benchmark]
         public void Set_property_value_directly()
