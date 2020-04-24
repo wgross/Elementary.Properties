@@ -1,13 +1,15 @@
-using System;
+using Elementary.Properties.Getters;
 using Xunit;
 
 namespace Elementary.Properties.Test
 {
     public class ReflectionGetterFactoryTest
     {
-        class Data
+        private class Data
         {
-            public int IntegerGetter { get; set; }
+            public int IntegerPublicGetter { get; set; }
+
+            public int IntegerProtectedGetter { protected get; set; }
         }
 
         [Fact]
@@ -15,12 +17,16 @@ namespace Elementary.Properties.Test
         {
             // ARRANGE
 
-            var getter = ReflectionGetterFactory.Of<Data>(o => o.IntegerGetter)
+            var data = new Data { IntegerPublicGetter = 1 };
+            var getter = ReflectionGetterFactory.Of<Data, int>(o => o.IntegerPublicGetter);
+
             // ACT
 
+            var result = getter(data);
 
+            // ASSERT
 
+            Assert.Equal(1, result);
         }
-
     }
 }
