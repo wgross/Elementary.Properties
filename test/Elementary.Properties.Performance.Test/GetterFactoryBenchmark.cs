@@ -16,10 +16,18 @@ namespace Elementary.Properties.Performance.Test
 
         private readonly Func<Data, int> reflectionGetter = ReflectionGetterFactory.Of<Data, int>(i => i.Property);
 
+        private readonly Func<Data, int> expressionGetter = ExpressionGetterFactory.Of<Data, int>(i => i.Property).Compile();
+
         [Benchmark]
         public void Get_property_value_with_reflection()
         {
-            var result = reflectionGetter(data);
+            var result = this.reflectionGetter(data);
+        }
+
+        [Benchmark]
+        public void Get_property_value_with_compiled_expression()
+        {
+            var result = this.expressionGetter(data);
         }
 
         [Benchmark]
