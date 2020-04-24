@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 
-namespace Elementary.Properties.Getters
+namespace Elementary.Properties
 {
     internal static class FrameworkExtensions
     {
