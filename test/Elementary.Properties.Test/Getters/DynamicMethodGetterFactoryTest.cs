@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Elementary.Properties.Test.Getters
 {
-    public class ExpressionGetterFactoryTest
+    public class DynamicMethodGetterFactoryTest
     {
         private class Data
         {
@@ -20,7 +20,7 @@ namespace Elementary.Properties.Test.Getters
             // ARRANGE
 
             var data = new Data { IntegerPublicGetter = 1 };
-            var getter = ExpressionGetterFactory.Of<Data, int>(o => o.IntegerPublicGetter).Compile();
+            var getter = DynamicMethodGetterFactory.Of<Data, int>(d => d.IntegerPublicGetter);
 
             // ACT
 
@@ -37,7 +37,7 @@ namespace Elementary.Properties.Test.Getters
             // ARRANGE
 
             var data = new Data { IntegerProtectedGetter = 1 };
-            var getter = ExpressionGetterFactory.Of<Data, int>(nameof(Data.IntegerProtectedGetter)).Compile();
+            var getter = DynamicMethodGetterFactory.Of<Data, int>(nameof(Data.IntegerProtectedGetter));
 
             // ACT
 
@@ -54,7 +54,7 @@ namespace Elementary.Properties.Test.Getters
             // ARRANGE
 
             var data = new Data { IntegerPrivateGetter = 1 };
-            var getter = ExpressionGetterFactory.Of<Data, int>(nameof(Data.IntegerPrivateGetter)).Compile();
+            var getter = DynamicMethodGetterFactory.Of<Data, int>(nameof(Data.IntegerPrivateGetter));
 
             // ACT
 

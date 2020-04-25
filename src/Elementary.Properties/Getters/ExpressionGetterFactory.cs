@@ -7,12 +7,11 @@ namespace Elementary.Properties.Getters
 {
     public class ExpressionGetterFactory
     {
-        public static Expression<Func<T, V>> Of<T, V>(Expression<Func<T, V>> propertyAccessExpression)
-            => GetPropertyValue<T, V>(PropertyInfo<T>(propertyAccessExpression.MemberName()));
+        public static Expression<Func<T, V>> Of<T, V>(Expression<Func<T, V>> propertyAccessExpression) => Of<T, V>(PropertyInfo(typeof(T), propertyAccessExpression.MemberName()));
 
-        private static PropertyInfo PropertyInfo<T>(string name) => typeof(T).GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        public static Expression<Func<T, V>> Of<T, V>(string propertyName) => Of<T, V>(PropertyInfo(typeof(T), propertyName));
 
-        private static Expression<Func<T, V>> GetPropertyValue<T, V>(PropertyInfo property) => GetPropertyValue<T, V>(Parameter(typeof(T), "instance"), property);
+        private static Expression<Func<T, V>> Of<T, V>(PropertyInfo property) => GetPropertyValue<T, V>(Parameter(typeof(T), "instance"), property);
 
         private static Expression<Func<T, V>> GetPropertyValue<T, V>(ParameterExpression instance, PropertyInfo property)
            => Expression.Lambda<Func<T, V>>(body: CastPropertyValue<V>(instance, property), parameters: instance);
@@ -24,5 +23,7 @@ namespace Elementary.Properties.Getters
             else
                 return TypeAs(Property(instance, property), typeof(V));
         }
+
+        private static PropertyInfo PropertyInfo(Type t, string name) => t.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
     }
 }

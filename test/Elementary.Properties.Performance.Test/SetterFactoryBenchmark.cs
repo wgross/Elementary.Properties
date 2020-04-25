@@ -13,9 +13,13 @@ namespace Elementary.Properties.Performance.Test
 
         private readonly Data data = new Data { Property = 0 };
 
+        private readonly Action<Data, int> nativeSetter = (i, v) => i.Property = v;
+
         private readonly Action<Data, int> reflectionSetter = ReflectionSetterFactory.Of<Data, int>(i => i.Property);
 
         private readonly Action<Data, int> expressionSetter = ExpressionSetterFactory.Of<Data, int>(i => i.Property).Compile();
+
+        private readonly Action<Data, int> dynamicSetter = DynamicMethodSetterFactory.Of<Data, int>(i => i.Property);
 
         [Benchmark]
         public void Set_property_value_with_reflection()
@@ -30,9 +34,15 @@ namespace Elementary.Properties.Performance.Test
         }
 
         [Benchmark]
+        public void Set_property_value_with_dynamic_method()
+        {
+            this.dynamicSetter(data, 1);
+        }
+
+        [Benchmark]
         public void Set_property_value_directly()
         {
-            this.data.Property = 1;
+            this.nativeSetter(this.data, 1);
         }
     }
 }
