@@ -1,13 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-using Elementary.Properties;
 
 namespace Elementary.Properties.Setters
 {
+    /// <summary>
+    /// Provides a delegate having a body if "{instance}.{property} = {value}" for a selected property
+    /// </summary>
     public class DynamicMethodSetterFactory
     {
+        #region Set property value with exact type
+
         public static Action<T, V> Of<T, V>(Expression<Func<T, V>> propertyAccessExpression) => Of<T, V>(PropertySetter(typeof(T), propertyAccessExpression.MemberName()));
 
         public static Action<T, V> Of<T, V>(string propertyName) => Of<T, V>(PropertySetter(typeof(T), propertyName));
@@ -34,6 +40,48 @@ namespace Elementary.Properties.Setters
             return (Action<T, V>)setProperty.CreateDelegate(typeof(Action<T, V>));
         }
 
-        private static MethodInfo PropertySetter(Type t, string pn) => t.GetProperty(pn, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetSetMethod(true);
+        #endregion Set property value with exact type
+
+        #region Set property value boxed
+
+        public static Action<T, object> Of<T>(Expression<Func<T, object>> propertyAccessExpression)
+            => Of<T>(PropertySetter(typeof(T), propertyAccessExpression.MemberName()));
+
+        public static Action<T, object> Of<T>(string propertyName)
+            => Of<T>(PropertySetter(typeof(T), propertyName));
+
+        private static Action<T, object> Of<T>(MethodInfo propertySetMethod)
+        {
+            DynamicMethod setProperty = new DynamicMethod(
+                name: $"{propertySetMethod.Name}_at_{typeof(T)}_obj",
+                returnType: typeof(void),
+                parameterTypes: new[] { typeof(T), typeof(object) },
+                typeof(T).Module);
+
+            setProperty.DefineParameter(1, ParameterAttributes.In, "instance");
+            setProperty.DefineParameter(2, ParameterAttributes.In, "value");
+
+            var ilGen = setProperty.GetILGenerator(256);
+            ilGen.Emit(OpCodes.Ldarg_0);
+            ilGen.Emit(OpCodes.Ldarg_1);
+            ilGen.Emit(OpCodes.Unbox_Any, propertySetMethod.GetParameters().Single().ParameterType);
+            ilGen.Emit(OpCodes.Callvirt, propertySetMethod);
+            ilGen.Emit(OpCodes.Ret);
+
+            return (Action<T, object>)setProperty.CreateDelegate(typeof(Action<T, object>));
+        }
+
+        #endregion Set property value boxed
+
+        internal static IEnumerable<(string name, Action<T, object> setter)> Of<T>(IEnumerable<PropertyInfo> properties)
+        {
+            return properties
+                .Where(p => p.CanWrite)
+                .Select(p => (p.Name, Of<T>(p.GetSetMethod(true))));
+        }
+
+        private static MethodInfo PropertySetter(Type t, string pn) => PropertyInfo(t, pn).GetSetMethod(true);
+
+        private static PropertyInfo PropertyInfo(Type t, string pn) => t.GetProperty(pn, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
     }
 }

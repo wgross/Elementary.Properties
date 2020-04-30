@@ -32,6 +32,23 @@ namespace Elementary.Properties.Test.Getters
         }
 
         [Fact]
+        public void Getter_retrieves_public_property_value_boxed()
+        {
+            // ARRANGE
+
+            var data = new Data { IntegerPublicGetter = 1 };
+            var getter = DynamicMethodGetterFactory.Of<Data>(d => d.IntegerPublicGetter);
+
+            // ACT
+
+            var result = getter(data);
+
+            // ASSERT
+
+            Assert.Equal(1, result);
+        }
+
+        [Fact]
         public void Getter_retrieves_protected_property_value()
         {
             // ARRANGE

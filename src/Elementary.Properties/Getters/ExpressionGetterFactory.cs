@@ -5,6 +5,9 @@ using static System.Linq.Expressions.Expression;
 
 namespace Elementary.Properties.Getters
 {
+    /// <summary>
+    /// Provides a delegate having a body if "return {instance}.{property}" for a selected property
+    /// </summary>
     public class ExpressionGetterFactory
     {
         public static Expression<Func<T, V>> Of<T, V>(Expression<Func<T, V>> propertyAccessExpression) => Of<T, V>(PropertyInfo(typeof(T), propertyAccessExpression.MemberName()));

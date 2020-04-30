@@ -5,6 +5,9 @@ using static System.Linq.Expressions.Expression;
 
 namespace Elementary.Properties.Setters
 {
+    /// <summary>
+    /// Provides a delegate having a body if "{instance}.{property} = {value}" for a selected property
+    /// </summary>
     public class ExpressionSetterFactory
     {
         public static Expression<Action<T, V>> Of<T, V>(Expression<Func<T, object>> propertyAccessExpression)
