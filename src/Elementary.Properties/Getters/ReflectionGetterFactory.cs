@@ -21,11 +21,11 @@ namespace Elementary.Properties.Getters
             return instance => (V)propertyInfo.Invoke(instance, parameters: null);
         }
 
-        internal static IEnumerable<(string name, Func<T, object> getter)> Of<T>(IEnumerable<PropertyInfo> properties)
+        internal static IEnumerable<(string name, Func<T, object?> getter)> Of<T>(IEnumerable<PropertyInfo> properties)
         {
             return properties
                 .Where(pi => pi.CanRead)
-                .Select<PropertyInfo, (string, Func<T, object>)>(pi => (pi.Name, t => pi.GetGetMethod(true).Invoke(t, null)));
+                .Select<PropertyInfo, (string, Func<T, object?>)>(pi => (pi.Name, t => pi.GetGetMethod(true).Invoke(t, null)));
         }
     }
 }

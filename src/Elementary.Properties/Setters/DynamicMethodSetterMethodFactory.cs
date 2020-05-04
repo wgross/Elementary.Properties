@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elementary.Properties.Selectors;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -44,11 +45,19 @@ namespace Elementary.Properties.Setters
 
         #region Set property value boxed
 
-        public static Action<T, object> Of<T>(Expression<Func<T, object>> propertyAccessExpression)
-            => Of<T>(PropertySetter(typeof(T), propertyAccessExpression.MemberName()));
+        public static Action<T, object> Of<T>(Expression<Func<T, object?>> propertyAccessExpression)
+            => Of<T>(ValueProperties.Single<T>(propertyAccessExpression));
 
         public static Action<T, object> Of<T>(string propertyName)
-            => Of<T>(PropertySetter(typeof(T), propertyName));
+            => Of<T>(ValueProperties.Single<T>(propertyName));
+
+        private static Action<T, object> Of<T>(PropertyInfo property)
+        {
+            if (!property.CanWrite)
+                throw new InvalidOperationException($"property(name='{property.Name}') hasn't a setter");
+
+            return Of<T>(property.GetSetMethod(true));
+        }
 
         private static Action<T, object> Of<T>(MethodInfo propertySetMethod)
         {
@@ -73,7 +82,7 @@ namespace Elementary.Properties.Setters
 
         #endregion Set property value boxed
 
-        internal static IEnumerable<(string name, Action<T, object> setter)> Of<T>(IEnumerable<PropertyInfo> properties)
+        internal static IEnumerable<(string name, Action<T, object?> setter)> Of<T>(IEnumerable<PropertyInfo> properties)
         {
             return properties
                 .Where(p => p.CanWrite)

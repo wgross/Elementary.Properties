@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elementary.Properties.Selectors;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -41,11 +42,19 @@ namespace Elementary.Properties.Getters
 
         #region Get property value boxed
 
-        public static Func<T, object> Of<T>(Expression<Func<T, object>> propertyAccessExpression)
-            => Of<T>(PropertyGetter(typeof(T), propertyAccessExpression.MemberName()));
+        public static Func<T, object> Of<T>(Expression<Func<T, object?>> propertyAccessExpression)
+            => Of<T>(ValueProperties.Single<T>(propertyAccessExpression));
 
         public static Func<T, object> Of<T>(string propertyName)
-            => Of<T>(PropertyGetter(typeof(T), propertyName));
+            => Of<T>(ValueProperties.Single<T>(propertyName));
+
+        private static Func<T, object> Of<T>(PropertyInfo propertyInfo)
+        {
+            if (!propertyInfo.CanRead)
+                throw new InvalidOperationException($"property(name='{propertyInfo.Name}') has no getter");
+
+            return Of<T>(propertyInfo.GetGetMethod(true));
+        }
 
         private static Func<T, object> Of<T>(MethodInfo propertyGetMethod)
         {
@@ -69,7 +78,7 @@ namespace Elementary.Properties.Getters
 
         #endregion Get property value boxed
 
-        internal static IEnumerable<(string name, Func<T, object> getter)> Of<T>(IEnumerable<PropertyInfo> propertyInfos)
+        internal static IEnumerable<(string name, Func<T, object?> getter)> Of<T>(IEnumerable<PropertyInfo> propertyInfos)
         {
             return propertyInfos
                 .Where(pi => pi.CanRead)

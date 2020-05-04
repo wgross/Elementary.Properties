@@ -1,8 +1,7 @@
 ﻿using Elementary.Properties.Getters;
+using Elementary.Properties.Selectors;
 using Elementary.Properties.Setters;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Elementary.Properties.PropertyBags
 {
@@ -22,7 +21,7 @@ namespace Elementary.Properties.PropertyBags
         public static ReflectedPropertyBag<T> Create<T>(T instance) where T : class
         {
             var bag = new ReflectedPropertyBag<T>(instance);
-            var properties = Properties<T>().ToArray();
+            var properties = ValueProperties.All<T>().ToArray();
             bag.Init(getters: ReflectionGetterFactory.Of<T>(properties), setters: ReflectionSetterFactory.Of<T>(properties));
             return bag;
         }
@@ -37,11 +36,9 @@ namespace Elementary.Properties.PropertyBags
         public static DynamicPropertyBag<T> Create<T>() where T : class
         {
             var bag = new DynamicPropertyBag<T>();
-            var properties = Properties<T>().ToArray();
+            var properties = ValueProperties.All<T>().ToArray();
             bag.Init(DynamicMethodGetterFactory.Of<T>(properties), DynamicMethodSetterFactory.Of<T>(properties));
             return bag;
         }
-
-        private static IEnumerable<PropertyInfo> Properties<T>() => typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
     }
 }

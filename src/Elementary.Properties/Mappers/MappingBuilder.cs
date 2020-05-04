@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elementary.Properties.Selectors;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -34,12 +35,7 @@ namespace Elementary.Properties.Test.Mappers
         /// Includes the properties which provide value type or string into the mapping
         /// </summary>
         /// <returns></returns>
-        public MappingBuilder<S, D> IncludeValueProperties()
-        {
-            static bool isValueProperty(PropertyInfo pi) => pi.PropertyType.IsValueType || pi.PropertyType.Equals(typeof(string));
-
-            return this.Include(typeof(S).GetProperties(PropertyBindingFlags).Where(isValueProperty));
-        }
+        public MappingBuilder<S, D> IncludeValueProperties() => this.Include(ValueProperties.All<S>());
 
         private MappingBuilder<S, D> Include(IEnumerable<PropertyInfo> properties)
         {
