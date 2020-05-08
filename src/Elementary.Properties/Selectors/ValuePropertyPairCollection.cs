@@ -18,6 +18,8 @@ namespace Elementary.Properties.Selectors
 
         internal ValuePropertyPairCollection(IEnumerable<ValuePropertyPair> propertyPairs) => this.propertyPairs = propertyPairs;
 
+        #region IEnumerable<ValuePropertyPair>
+
         public IEnumerator<ValuePropertyPair> GetEnumerator()
         {
             var resultPairs = this.propertyPairs
@@ -30,13 +32,15 @@ namespace Elementary.Properties.Selectors
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
+        #endregion IEnumerable<ValuePropertyPair>
+
         #region IValuePropertyJoinConfiguration
 
         /// <summary>
         /// Exclude property pairs from the collection based on the name of a left side property.
         /// </summary>
         /// <param name="propertyNames"></param>
-        public void ExcludeLeft(params string[] propertyNames) => this.exclusions.AddRange(propertyNames);
+        void IValuePropertyJoinConfiguration.ExcludeLeft(params string[] propertyNames) => this.exclusions.AddRange(propertyNames);
 
         /// <summary>
         /// Adds a manually configured paring of two properties having. In general these properties have different names
@@ -45,7 +49,7 @@ namespace Elementary.Properties.Selectors
         /// </summary>
         /// <param name="leftProperty"></param>
         /// <param name="rightProperty"></param>
-        public void OverridePair(PropertyInfo leftProperty, PropertyInfo rightProperty) => this.overrides.Add(new ValuePropertyPair(leftProperty, rightProperty));
+        void IValuePropertyJoinConfiguration.OverridePair(PropertyInfo leftProperty, PropertyInfo rightProperty) => this.overrides.Add(new ValuePropertyPair(leftProperty, rightProperty));
 
         #endregion IValuePropertyJoinConfiguration
     }

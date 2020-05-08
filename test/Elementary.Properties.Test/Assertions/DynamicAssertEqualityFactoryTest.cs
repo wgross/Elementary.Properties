@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Elementary.Properties.Test.Assertions
 {
-    public class DynamicAssertEqualFactoryTest
+    public class DynamicAssertEqualityFactoryTest
     {
         public class Data1
         {

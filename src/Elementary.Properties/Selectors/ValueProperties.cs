@@ -39,7 +39,12 @@ namespace Elementary.Properties.Selectors
             return propertyInfo;
         }
 
-        public static IEnumerable<PropertyInfo> All<T>() => PropertyInfos(typeof(T), defaultBindingFlags, IsValueType);
+        public static IEnumerable<PropertyInfo> All<T>(Action<IValuePropertiesCollectionConfig>? configure = null)
+        {
+            var collection = PropertyInfos(typeof(T), defaultBindingFlags, IsValueType);
+            configure?.Invoke(collection);
+            return collection;
+        }
 
         public static IEnumerable<PropertyInfo> AllCanRead<T>() => PropertyInfos(typeof(T), defaultBindingFlags, IsValueType, CanRead);
 
@@ -85,11 +90,12 @@ namespace Elementary.Properties.Selectors
 
         #region Query properties from a Type
 
-        private static IEnumerable<PropertyInfo> PropertyInfos(Type type, BindingFlags defaultBindingFlags, params Func<PropertyInfo, bool>[] filters)
+        private static ValuePropertyCollection PropertyInfos(Type type, BindingFlags defaultBindingFlags, params Func<PropertyInfo, bool>[] filters)
         {
-            var all = type.GetProperties(defaultBindingFlags).AsEnumerable();
-            all = filters.Aggregate(all, (pi, f) => pi.Where(f));
-            return all;
+            var all = type
+                .GetProperties(defaultBindingFlags)
+                .AsEnumerable();
+            return new ValuePropertyCollection(filters.Aggregate(all, (pi, f) => pi.Where(f)));
         }
 
         public static object Intersect<T1, T2>()

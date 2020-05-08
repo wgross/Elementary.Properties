@@ -49,6 +49,34 @@ namespace Elementary.Properties.Test.Selectors
         }
 
         [Fact]
+        public void ValuePorperties_excludes_property_by_name()
+        {
+            // ACT
+
+            var result = ValueProperties.All<PropertyArchetypes>(c => c.Exclude(nameof(PropertyArchetypes.Integer)));
+
+            // ASSERT
+
+            Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.Name).ToArray());
+        }
+
+        [Fact]
+        public void ValuePorperties_includes_references_and_collections_by_name()
+        {
+            // ACT
+
+            var result = ValueProperties.All<PropertyArchetypes>(c =>
+            {
+                c.Include(PropertyFromMemberAccess<PropertyArchetypes>(p => p.Reference));
+                c.Include(PropertyFromMemberAccess<PropertyArchetypes>(p => p.Collection));
+            });
+
+            // ASSERT
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference", "Collection" }, result.Select(pi => pi.Name).ToArray());
+        }
+
+        [Fact]
         public void ValueProperties_accepts_valueProperties_and_strings_which_can_read()
         {
             // ACT
