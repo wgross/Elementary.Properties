@@ -39,6 +39,11 @@ namespace Elementary.Properties.Selectors
             return propertyInfo;
         }
 
+        /// <summary>
+        /// Retrieves all value (or string) type properties of <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static IEnumerable<PropertyInfo> All<T>(Action<IValuePropertiesCollectionConfig>? configure = null)
         {
             var collection = PropertyInfos(typeof(T), defaultBindingFlags, IsValueType);
@@ -46,9 +51,44 @@ namespace Elementary.Properties.Selectors
             return collection;
         }
 
-        public static IEnumerable<PropertyInfo> AllCanRead<T>() => PropertyInfos(typeof(T), defaultBindingFlags, IsValueType, CanRead);
+        /// <summary>
+        /// Retrieves all value (or string) type properties of <typeparamref name="T"/> which have public or non-public getter.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="configure">edit the property list before is will be returned</param>
+        /// <returns></returns>
+        public static IEnumerable<PropertyInfo> AllCanRead<T>(Action<IValuePropertiesCollectionConfig>? configure = null)
+        {
+            var collection = PropertyInfos(typeof(T), defaultBindingFlags, IsValueType, CanRead);
+            configure?.Invoke(collection);
+            return collection;
+        }
 
-        public static IEnumerable<PropertyInfo> AllCanWrite<T>() => PropertyInfos(typeof(T), defaultBindingFlags, IsValueType, CanWrite);
+        /// <summary>
+        /// Retrieves all value (or string) type properties of <typeparamref name="T"/> which have public or non-public setter.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="configure">edit the property list before is will be returned</param>
+        /// <returns></returns>
+        public static IEnumerable<PropertyInfo> AllCanWrite<T>(Action<IValuePropertiesCollectionConfig>? configure = null)
+        {
+            var collection = PropertyInfos(typeof(T), defaultBindingFlags, IsValueType, CanWrite);
+            configure?.Invoke(collection);
+            return collection;
+        }
+
+        /// <summary>
+        /// Retrieves all value (or string) type properties of <typeparamref name="T"/> which have bothe getter and setter (public or non-public).
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="configure">edit the property list before is will be returned</param>
+        /// <returns></returns>
+        public static IEnumerable<PropertyInfo> AllCanReadAndWrite<T>(Action<IValuePropertiesCollectionConfig>? configure = null)
+        {
+            var collection = PropertyInfos(typeof(T), defaultBindingFlags, IsValueType, CanRead, CanWrite);
+            configure?.Invoke(collection);
+            return collection;
+        }
 
         public static ValuePropertyPairCollection Join(IEnumerable<PropertyInfo> leftProperties, IEnumerable<PropertyInfo> rightProperties, Action<JoinError, (string name, Type propertyType)>? onError = null, Action<IValuePropertyJoinConfiguration> configure = null)
         {
