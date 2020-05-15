@@ -45,21 +45,21 @@ namespace Elementary.Properties.Setters
 
         #region Set property value boxed
 
-        public static Action<T, object> Of<T>(Expression<Func<T, object?>> propertyAccessExpression)
+        public static Action<T, object?> Of<T>(Expression<Func<T, object?>> propertyAccessExpression)
             => Of<T>(ValueProperties.Single<T>(propertyAccessExpression));
 
-        public static Action<T, object> Of<T>(string propertyName)
+        public static Action<T, object?> Of<T>(string propertyName)
             => Of<T>(ValueProperties.Single<T>(propertyName));
 
-        private static Action<T, object> Of<T>(PropertyInfo property)
+        internal static Action<T, object?> Of<T>(PropertyInfo property)
         {
             if (!property.CanWrite)
-                throw new InvalidOperationException($"property(name='{property.Name}') hasn't a setter");
+                throw new InvalidOperationException($"property(name='{property.Name}') can't write");
 
             return Of<T>(property.GetSetMethod(true));
         }
 
-        private static Action<T, object> Of<T>(MethodInfo propertySetMethod)
+        private static Action<T, object?> Of<T>(MethodInfo propertySetMethod)
         {
             DynamicMethod setProperty = new DynamicMethod(
                 name: $"{propertySetMethod.Name}_at_{typeof(T)}_obj",
@@ -77,7 +77,7 @@ namespace Elementary.Properties.Setters
             ilGen.Emit(OpCodes.Callvirt, propertySetMethod);
             ilGen.Emit(OpCodes.Ret);
 
-            return (Action<T, object>)setProperty.CreateDelegate(typeof(Action<T, object>));
+            return (Action<T, object?>)setProperty.CreateDelegate(typeof(Action<T, object?>));
         }
 
         #endregion Set property value boxed

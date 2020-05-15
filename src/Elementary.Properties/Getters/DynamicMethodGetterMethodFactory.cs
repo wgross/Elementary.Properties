@@ -42,21 +42,21 @@ namespace Elementary.Properties.Getters
 
         #region Get property value boxed
 
-        public static Func<T, object> Of<T>(Expression<Func<T, object?>> propertyAccessExpression)
+        public static Func<T, object?> Of<T>(Expression<Func<T, object?>> propertyAccessExpression)
             => Of<T>(ValueProperties.Single<T>(propertyAccessExpression));
 
-        public static Func<T, object> Of<T>(string propertyName)
+        public static Func<T, object?> Of<T>(string propertyName)
             => Of<T>(ValueProperties.Single<T>(propertyName));
 
-        private static Func<T, object> Of<T>(PropertyInfo propertyInfo)
+        internal static Func<T, object?> Of<T>(PropertyInfo propertyInfo)
         {
             if (!propertyInfo.CanRead)
-                throw new InvalidOperationException($"property(name='{propertyInfo.Name}') has no getter");
+                throw new InvalidOperationException($"property(name='{propertyInfo.Name}') can't read");
 
             return Of<T>(propertyInfo.GetGetMethod(true));
         }
 
-        private static Func<T, object> Of<T>(MethodInfo propertyGetMethod)
+        private static Func<T, object?> Of<T>(MethodInfo propertyGetMethod)
         {
             DynamicMethod getProperty = new DynamicMethod(
                 name: $"{propertyGetMethod.Name}_from_{typeof(T)}_obj",
@@ -73,7 +73,7 @@ namespace Elementary.Properties.Getters
             ilGen.Emit(OpCodes.Box, propertyGetMethod.ReturnType);
             ilGen.Emit(OpCodes.Ret);
 
-            return (Func<T, object>)getProperty.CreateDelegate(typeof(Func<T, object>));
+            return (Func<T, object?>)getProperty.CreateDelegate(typeof(Func<T, object?>));
         }
 
         #endregion Get property value boxed

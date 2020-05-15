@@ -26,5 +26,12 @@ namespace Elementary.Properties.Setters
                 .Where(pi => pi.CanWrite)
                 .Select<PropertyInfo, (string, Action<T, object?>)>(pi => (pi.Name, (t, v) => pi.GetSetMethod(true).Invoke(t, new[] { v })));
         }
+
+        internal static (string name, Action<T, object?> setter) Of<T>(PropertyInfo property)
+        {
+            if (property.CanWrite)
+                return (property.Name, (t, v) => property.GetSetMethod(true).Invoke(t, new[] { v }));
+            throw new InvalidOperationException($"property(name='{property.Name}') can't write");
+        }
     }
 }

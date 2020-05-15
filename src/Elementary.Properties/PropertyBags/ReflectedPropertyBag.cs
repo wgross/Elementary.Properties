@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Elementary.Properties.PropertyBags
 {
@@ -10,5 +11,7 @@ namespace Elementary.Properties.PropertyBags
         {
             this.Instance = instance;
         }
+
+        
     }
 }
