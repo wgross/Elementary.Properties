@@ -1,11 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Nullable>Enable</Nullable>
+    <IsPackable>True</IsPackable>
   </PropertyGroup>
-
+  
   <PropertyGroup>
     <PackageId>Elementary.Properties</PackageId>
     <Version>0.0.1</Version>
@@ -13,10 +13,14 @@
     <Company>github.com/wgross</Company>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageDescription>Emitted or reflected operations on collections of value properties</PackageDescription>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>emit; reflection; assertion; mapping; property</PackageTags>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
   </ItemGroup>
-
 </Project>
