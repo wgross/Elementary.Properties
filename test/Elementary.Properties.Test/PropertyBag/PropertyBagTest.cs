@@ -28,9 +28,9 @@ namespace Elementary.Properties.Test.PropertyBags
         public static IEnumerable<object[]> SamplePropertyBags()
         {
             var data = new Data();
-            yield return new object[] { PropertyBag.Create<Data>(data) };
+            yield return new object[] { PropertyBag.Of<Data>(data) };
 
-            var pBag = PropertyBag.Create<Data>();
+            var pBag = PropertyBag.Of<Data>();
             pBag.SetInstance(data);
             yield return new object[] { pBag };
         }
@@ -104,8 +104,8 @@ namespace Elementary.Properties.Test.PropertyBags
 
             // ASSERT
 
-            Assert.Equal(new[] { nameof(Data.Public), "Private", nameof(Data.PrivatePublic), nameof(Data.PublicPrivate), nameof(Data.PublicNone), nameof(Data.NonePublic) }, result1);
-            Assert.Equal(6, result2);
+            Assert.Equal(new[] { nameof(Data.Public), "Private", nameof(Data.PrivatePublic), nameof(Data.PublicPrivate) }, result1);
+            Assert.Equal(4, result2);
         }
 
         [Theory]
@@ -118,7 +118,7 @@ namespace Elementary.Properties.Test.PropertyBags
 
             // ASSERT
 
-            Assert.Equal(new object[] { 1, 2, 3, 5, 6 }, result1);
+            Assert.Equal(new object[] { 1, 2, 3, 5 }, result1);
         }
 
         [Theory]

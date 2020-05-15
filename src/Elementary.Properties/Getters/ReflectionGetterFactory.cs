@@ -27,5 +27,13 @@ namespace Elementary.Properties.Getters
                 .Where(pi => pi.CanRead)
                 .Select<PropertyInfo, (string, Func<T, object?>)>(pi => (pi.Name, t => pi.GetGetMethod(true).Invoke(t, null)));
         }
+
+        internal static (string name, Func<T, object?> getter) Of<T>(PropertyInfo property)
+        {
+            if (property.CanRead)
+                return (property.Name, t => property.GetGetMethod(true).Invoke(t, null));
+
+            throw new InvalidOperationException($"PropertyInfo(name='{property.Name}') van't read");
+        }
     }
 }
