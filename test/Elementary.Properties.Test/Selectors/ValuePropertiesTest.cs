@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using Xunit;
-using static Elementary.Properties.Selectors.PropertyInfos;
 
 namespace Elementary.Properties.Test.Selectors
 {
@@ -30,11 +29,11 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperties.All<PropertyTypeArchetypes>();
+            var result = ValueProperty<PropertyTypeArchetypes>.All();
 
             // ASSERT
 
-            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String" }, result.Select(pi => pi.Name));
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String" }, result.Select(pi => pi.Property.Name));
         }
 
         #endregion Verify Type Archetypes
@@ -61,11 +60,11 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperties.AllCanRead<AccessorArchetypes>();
+            var result = ValueProperty<AccessorArchetypes>.AllCanRead();
 
             // ASSERT
 
-            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingSetter" }, result.Select(pi => pi.Name));
+            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingSetter" }, result.Select(pi => pi.Property.Name));
         }
 
         [Fact]
@@ -73,11 +72,11 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperties.AllCanWrite<AccessorArchetypes>();
+            var result = ValueProperty<AccessorArchetypes>.AllCanWrite();
 
             // ASSERT
 
-            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingGetter" }, result.Select(pi => pi.Name));
+            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingGetter" }, result.Select(pi => pi.Property.Name));
         }
 
         [Fact]
@@ -85,11 +84,11 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperties.AllCanReadAndWrite<AccessorArchetypes>();
+            var result = ValueProperty<AccessorArchetypes>.AllCanReadAndWrite();
 
             // ASSERT
 
-            Assert.Equal(new[] { "Public", "Protected", "Private" }, result.Select(pi => pi.Name));
+            Assert.Equal(new[] { "Public", "Protected", "Private" }, result.Select(pi => pi.Property.Name));
         }
 
         [Fact]
@@ -97,9 +96,9 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperties.Join(
-                ValueProperties.All<PropertyTypeArchetypes>(),
-                ValueProperties.All<PropertyTypeArchetypes>()
+            var result = ValueProperty<PropertyTypeArchetypes>.Join<PropertyTypeArchetypes>(
+                ValueProperty<PropertyTypeArchetypes>.All(),
+                ValueProperty<PropertyTypeArchetypes>.All()
             ).ToArray();
 
             // ASSERT
@@ -124,9 +123,9 @@ namespace Elementary.Properties.Test.Selectors
             // ACT
 
             (JoinError error, (string name, Type propertyType) p) recordedError = (JoinError.RightPropertyMissing, (null, null));
-            var result = ValueProperties.Join(
-                ValueProperties.All<PropertyTypeArchetypes>(),
-                ValueProperties.All<MissingProperty>(),
+            var result = ValueProperty<PropertyTypeArchetypes>.Join<MissingProperty>(
+                ValueProperty<PropertyTypeArchetypes>.All(),
+                ValueProperty<MissingProperty>.All(),
                 (error, p) => recordedError = (error, p)
             ).ToArray();
 
@@ -143,9 +142,9 @@ namespace Elementary.Properties.Test.Selectors
             // ACT
 
             (JoinError error, (string name, Type propertyType) p) recordedError = (JoinError.RightPropertyMissing, (null, null));
-            var result = ValueProperties.Join(
-                ValueProperties.All<MissingProperty>(),
-                ValueProperties.All<PropertyTypeArchetypes>(),
+            var result = ValueProperty<MissingProperty>.Join<PropertyTypeArchetypes>(
+                ValueProperty<MissingProperty>.All(),
+                ValueProperty<PropertyTypeArchetypes>.All(),
                 (error, p) => recordedError = (error, p)
             ).ToArray();
 
@@ -173,9 +172,9 @@ namespace Elementary.Properties.Test.Selectors
             // ACT
 
             (JoinError error, (string name, Type propertyType) p) recordedError = (JoinError.RightPropertyMissing, (null, null));
-            var result = ValueProperties.Join(
-                ValueProperties.All<PropertyTypeArchetypes>(),
-                ValueProperties.All<DifferentType>(),
+            var result = ValueProperty<PropertyTypeArchetypes>.Join<DifferentType>(
+                ValueProperty<PropertyTypeArchetypes>.All(),
+                ValueProperty<DifferentType>.All(),
                 (error, p) => recordedError = (error, p)
             ).ToArray();
 
@@ -185,7 +184,5 @@ namespace Elementary.Properties.Test.Selectors
             Assert.Equal("Integer", recordedError.p.name);
             Assert.Equal(typeof(int), recordedError.p.propertyType);
         }
-
-     
     }
 }

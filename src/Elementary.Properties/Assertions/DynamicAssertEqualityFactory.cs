@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using static Elementary.Properties.Selectors.ValueProperties;
 
 namespace Elementary.Properties.Assertions
 {
@@ -19,14 +18,14 @@ namespace Elementary.Properties.Assertions
         /// <typeparam name="T2"></typeparam>
         /// <param name="configure"></param>
         /// <returns></returns>
-        public static Func<T1, T2, bool> Of<T1, T2>(Action<IValuePropertyJoinConfiguration>? configure = null)
+        public static Func<T1, T2, bool> Of<T1, T2>(Action<IValuePropertyPairConfiguration>? configure = null)
         {
-            var propertyPairs = Join(leftProperties: AllCanRead<T1>(), rightProperties: AllCanRead<T2>());
+            var propertyPairs = ValueProperty<T1>.Join<T2>(leftProperties: ValueProperty<T1>.AllCanRead(), rightProperties: ValueProperty<T2>.AllCanRead());
             configure?.Invoke(propertyPairs);
             return AssertEqualiyOperation<T1, T2>(propertyPairs);
         }
 
-        internal static Func<T1, T2, bool> AssertEqualiyOperation<T1, T2>(IEnumerable<ValuePropertyPair> propertyPairs)
+        internal static Func<T1, T2, bool> AssertEqualiyOperation<T1, T2>(IEnumerable<IValuePropertyPair> propertyPairs)
         {
             var equalsMethod = new DynamicMethod(
                 name: $"Equals_{nameof(T1)}_{nameof(T2)}",
@@ -51,19 +50,23 @@ namespace Elementary.Properties.Assertions
 
                 builder.Emit(OpCodes.Call, equalityComparerDefault.GetGetMethod());
 
-                // get property values
-                builder.Emit(OpCodes.Ldarg_0);
-                builder.Emit(OpCodes.Callvirt, pair.Left.GetGetMethod(true));
-                builder.Emit(OpCodes.Ldarg_1);
-                builder.Emit(OpCodes.Callvirt, pair.Right.GetGetMethod(true));
-                // compare
-                builder.Emit(OpCodes.Callvirt, equalityComparerDefaultEquals);
-                builder.Emit(OpCodes.Brtrue_S, endOfCondition);
-                // return false
-                builder.Emit(OpCodes.Ldc_I4_0);
-                builder.Emit(OpCodes.Ret);
-                // jump target
-                builder.MarkLabel(endOfCondition);
+                if (pair is ValuePropertySymmetricPair symPair)
+                {
+                    // get property values
+                    builder.Emit(OpCodes.Ldarg_0);
+                    builder.Emit(OpCodes.Callvirt, pair.Left.GetGetMethod(true));
+                    builder.Emit(OpCodes.Ldarg_1);
+                    builder.Emit(OpCodes.Callvirt, symPair.Right.GetGetMethod(true));
+                    // compare
+                    builder.Emit(OpCodes.Callvirt, equalityComparerDefaultEquals);
+                    builder.Emit(OpCodes.Brtrue_S, endOfCondition);
+                    // return false
+                    builder.Emit(OpCodes.Ldc_I4_0);
+                    builder.Emit(OpCodes.Ret);
+                    // jump target
+                    builder.MarkLabel(endOfCondition);
+                }
+                else throw new InvalidOperationException($"pairing type isn't {typeof(ValuePropertySymmetricPair).Name} but {pair.GetType().Name}");
             }
 
             // return true

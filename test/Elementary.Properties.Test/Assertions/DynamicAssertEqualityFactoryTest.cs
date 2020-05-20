@@ -62,5 +62,59 @@ namespace Elementary.Properties.Test.Assertions
 
             Assert.False(result);
         }
+
+        [Fact]
+        public void AssertValuesAreEqual_accepts_equal_values_in_nested_classes()
+        {
+            // ARRANGE
+
+            var data1 = new Data1
+            {
+                Reference = new Data1()
+            };
+            var data2 = new Data2
+            {
+                Reference = new Data2()
+            };
+            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>();
+
+            // ACT
+
+            var result = areEqual(data1, data2);
+
+            // ASSERT
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void AssertValuesAreEqual_rejects_different_values_in_nested_classes()
+        {
+            // ARRANGE
+
+            var data1 = new Data1
+            {
+                Reference = new Data1
+                {
+                    Integer = 1
+                }
+            };
+            var data2 = new Data2
+            {
+                Reference = new Data2
+                {
+                    Integer = 2
+                }
+            };
+            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>();
+
+            // ACT
+
+            var result = areEqual(data1, data2);
+
+            // ASSERT
+
+            Assert.False(result);
+        }
     }
 }

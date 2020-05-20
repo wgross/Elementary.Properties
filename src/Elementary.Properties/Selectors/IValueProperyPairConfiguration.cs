@@ -2,7 +2,7 @@
 
 namespace Elementary.Properties.Selectors
 {
-    public interface IValuePropertyJoinConfiguration
+    public interface IValuePropertyPairConfiguration
     {
         public void ExcludeLeft(params string[] propertyNames);
 

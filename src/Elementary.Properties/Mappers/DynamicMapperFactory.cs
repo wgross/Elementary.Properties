@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using static Elementary.Properties.Selectors.ValueProperties;
 
 namespace Elementary.Properties.Mappers
 {
@@ -18,14 +17,14 @@ namespace Elementary.Properties.Mappers
         /// <typeparam name="D"></typeparam>
         /// <param name="configure"></param>
         /// <returns></returns>
-        public static Action<S, D> Of<S, D>(Action<IValuePropertyJoinConfiguration>? configure = null)
+        public static Action<S, D> Of<S, D>(Action<IValuePropertyMappingConfiguration<S, D>>? configure = null)
         {
-            var propertyPairs = Join(leftProperties: AllCanRead<S>(), rightProperties: AllCanWrite<D>());
+            var propertyPairs = ValueProperty<S>.Join<D>(leftProperties: ValueProperty<S>.AllCanRead(), rightProperties: ValueProperty<D>.AllCanWrite());
             configure?.Invoke(propertyPairs);
             return DynamicMappingOperation<S, D>(propertyPairs);
         }
 
-        private static Action<S, D> DynamicMappingOperation<S, D>(IEnumerable<ValuePropertyPair> propertyPairs)
+        private static Action<S, D> DynamicMappingOperation<S, D>(IEnumerable<IValuePropertyPair> propertyPairs)
         {
             var mapProperty = new DynamicMethod(
                name: $"{typeof(S)}_to_{typeof(D)}",
@@ -38,19 +37,23 @@ namespace Elementary.Properties.Mappers
 
             var ilGen = mapProperty.GetILGenerator(256);
             foreach (var pair in propertyPairs.ToArray())
-                MapPropertyPair(ilGen, pair);
+                MapPropertyPair<S, D>(ilGen, pair);
 
             ilGen.Emit(OpCodes.Ret);
 
             return (Action<S, D>)mapProperty.CreateDelegate(typeof(Action<S, D>));
         }
 
-        private static void MapPropertyPair(ILGenerator ilGen, ValuePropertyPair pair)
+        private static void MapPropertyPair<S, D>(ILGenerator ilGen, IValuePropertyPair pair)
         {
-            ilGen.Emit(OpCodes.Ldarg_1);
-            ilGen.Emit(OpCodes.Ldarg_0);
-            ilGen.Emit(OpCodes.Callvirt, pair.Left.GetGetMethod(nonPublic: true));
-            ilGen.Emit(OpCodes.Callvirt, pair.Right.GetSetMethod(nonPublic: true));
+            if (pair is ValuePropertySymmetricPair symPair)
+            {
+                ilGen.Emit(OpCodes.Ldarg_1);
+                ilGen.Emit(OpCodes.Ldarg_0);
+                ilGen.Emit(OpCodes.Callvirt, pair.Left.GetGetMethod(nonPublic: true));
+                ilGen.Emit(OpCodes.Callvirt, symPair.Right.GetSetMethod(nonPublic: true));
+            }
+            else throw new InvalidOperationException($"pairing type ({pair.GetType().Name}) is unkown. Can't generate code");
         }
     }
 }

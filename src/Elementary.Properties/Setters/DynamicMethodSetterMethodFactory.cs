@@ -46,10 +46,10 @@ namespace Elementary.Properties.Setters
         #region Set property value boxed
 
         public static Action<T, object?> Of<T>(Expression<Func<T, object?>> propertyAccessExpression)
-            => Of<T>(ValueProperties.Single<T>(propertyAccessExpression));
+            => Of<T>(ValueProperty<T>.Info(propertyAccessExpression));
 
         public static Action<T, object?> Of<T>(string propertyName)
-            => Of<T>(ValueProperties.Single<T>(propertyName));
+            => Of<T>(ValueProperty<T>.Info(propertyName));
 
         internal static Action<T, object?> Of<T>(PropertyInfo property)
         {

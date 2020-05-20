@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using Xunit;
-using static Elementary.Properties.Selectors.PropertyInfos;
 
 namespace Elementary.Properties.Test.Selectors
 {
@@ -24,31 +23,89 @@ namespace Elementary.Properties.Test.Selectors
         }
 
         [Fact]
-        public void ValuePorperties_excludes_property_by_name()
+        public void ValueProperties_excludes_property_by_name()
         {
             // ACT
 
-            var result = ValueProperties.All<PropertyTypeArchetypes>(c => c.Exclude(nameof(PropertyTypeArchetypes.Integer)));
+            var result = ValueProperty<PropertyTypeArchetypes>.All(c => c.Exclude(nameof(PropertyTypeArchetypes.Integer)));
 
             // ASSERT
 
-            Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.Name).ToArray());
+            Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.Property.Name).ToArray());
         }
 
+        //[Fact]
+        //public void ValueProperties_rejects_include_from_wrong_class()
+        //{
+        //    // ACT
+
+        //    var result = ValueProperty<PropertyTypeArchetypes>.All(c => c.Exclude(nameof(PropertyTypeArchetypes.Integer)));
+
+        //    // ASSERT
+
+        //    Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.Property.Name).ToArray());
+        //}
+
         [Fact]
-        public void ValuePorperties_includes_references_and_collections_by_name()
+        public void ValueProperties_includes_nested_class()
         {
             // ACT
 
-            var result = ValueProperties.All<PropertyTypeArchetypes>(c =>
+            var result = ValueProperty<PropertyTypeArchetypes>.All(c =>
             {
-                c.Include(PropertyFromMemberAccess<PropertyTypeArchetypes>(p => p.Reference));
-                c.Include(PropertyFromMemberAccess<PropertyTypeArchetypes>(p => p.Collection));
+                c.IncludeValuesOf(p => p.Reference);
             });
 
             // ASSERT
 
-            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference", "Collection" }, result.Select(pi => pi.Name).ToArray());
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.Property.Name).ToArray());
+        }
+
+        public class AccessorArchetypes
+        {
+            private string missingGetter;
+
+            public int Public { get; set; }
+
+            protected Guid Protected { get; set; }
+
+            private DateTime? Private { get; set; }
+
+            public string MissingGetter { set => this.missingGetter = value; }
+
+            public string MissingSetter => "getter";
+
+            public AccessorArchetypes Reference { set; get; }
+        }
+
+        //[Fact]
+        //public void ValueProperties_rejects_nested_class_unreadable_property()
+        //{
+        //    // ACT
+
+        //    var result = ValueProperty<AccessorArchetypes>.All(c =>
+        //    {
+        //        // ASSERT
+
+        //        Assert.Throws<ArgumentException>(() => c.IncludeValuesOf(c=>c.MissingSetter)));
+        //    });
+        //}
+
+        [Fact]
+        public void ValueProperties_includes_nested_class_property_matching_parents_accessor_archetype()
+        {
+            // ACT
+
+            var result = ValueProperty<AccessorArchetypes>.AllCanRead(c =>
+            {
+                c.IncludeValuesOf(p => p.Reference);
+            });
+
+            // ASSERT
+
+            var referenceProperty = (ValuePropertyCollectionInnerNode)(result.Single(p => p.Property.Name == "Reference"));
+
+            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingSetter" }, referenceProperty.ValueProperties.Select(pi => pi.Property.Name).ToArray());
         }
     }
 }

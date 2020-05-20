@@ -14,7 +14,7 @@ namespace Elementary.Properties.Setters
     {
         public static Action<T, V> Of<T, V>(Expression<Func<T, object?>> propertyAccessExpression)
         {
-            var propertyInfo = ValueProperties.Single<T>(propertyAccessExpression);
+            var propertyInfo = ValueProperty<T>.Info(propertyAccessExpression);
             var setter = propertyInfo.GetSetMethod(true) ?? throw new InvalidOperationException($"property(name='{propertyInfo.Name}') hasn't a setter");
 
             return (T instance, V value) => setter.Invoke(instance, parameters: new object?[] { value });

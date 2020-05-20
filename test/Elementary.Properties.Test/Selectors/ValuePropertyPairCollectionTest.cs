@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using Xunit;
-using static Elementary.Properties.Selectors.PropertyInfos;
 
 namespace Elementary.Properties.Test.Selectors
 {
@@ -28,9 +27,9 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperties.Join(
-                ValueProperties.All<PropertyTypeArchetypes>(),
-                ValueProperties.All<PropertyTypeArchetypes>(),
+            var result = ValueProperty<PropertyTypeArchetypes>.Join<PropertyTypeArchetypes>(
+                ValueProperty<PropertyTypeArchetypes>.All(),
+                ValueProperty<PropertyTypeArchetypes>.All(),
             configure: cfg => cfg.ExcludeLeft(nameof(PropertyTypeArchetypes.Integer), nameof(PropertyTypeArchetypes.Nullable))).ToArray();
 
             // ASSERT
@@ -38,8 +37,8 @@ namespace Elementary.Properties.Test.Selectors
             Assert.Equal(2, result.Length);
             Assert.Equal(new[]
                 {
-                    PropertyFromMemberAccess<PropertyTypeArchetypes>(p => p.Struct),
-                    PropertyFromMemberAccess<PropertyTypeArchetypes>(p => p.String)
+                    Property<PropertyTypeArchetypes>.Info(p => p.Struct),
+                    Property<PropertyTypeArchetypes>.Info(p => p.String)
                 },
                 result.Select(pp => pp.Left).ToArray());
         }
@@ -64,12 +63,12 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperties.Join(
-                ValueProperties.All<PropertyTypeArchetypes>(),
-                ValueProperties.All<DifferentNames>(),
+            var result = ValueProperty<PropertyTypeArchetypes>.Join<DifferentNames>(
+                ValueProperty<PropertyTypeArchetypes>.All(),
+                ValueProperty<DifferentNames>.All(),
                 configure: cfg => cfg.OverridePair(
-                    ValueProperties.Single<PropertyTypeArchetypes>(p => p.Integer),
-                    ValueProperties.Single<DifferentNames>(p => p.AlsoInteger)))
+                    ValueProperty<PropertyTypeArchetypes>.Info(p => p.Integer),
+                    ValueProperty<DifferentNames>.Info(p => p.AlsoInteger)))
                 .ToArray();
 
             // ASSERT

@@ -5,16 +5,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using static Elementary.Properties.Selectors.ValueProperties;
 
 namespace Elementary.Properties.Comparers
 {
     public class DynamicEqualityComparerFactory
     {
-        public static IEqualityComparer<T> Of<T>(Action<IValuePropertyJoinConfiguration>? configure = null)
+        public static IEqualityComparer<T> Of<T>(Action<IValuePropertyPairConfiguration>? configure = null)
         {
-            var properties = AllCanRead<T>();
-            var propertyPairs = Join(leftProperties: properties, rightProperties: properties);
+            var properties = ValueProperty<T>.AllCanRead();
+            var propertyPairs = ValueProperty<T>.Join<T>(leftProperties: properties, rightProperties: properties);
             configure?.Invoke(propertyPairs);
 
             return new DynamicEqualityComparer<T>(

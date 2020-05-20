@@ -43,10 +43,10 @@ namespace Elementary.Properties.Getters
         #region Get property value boxed
 
         public static Func<T, object?> Of<T>(Expression<Func<T, object?>> propertyAccessExpression)
-            => Of<T>(ValueProperties.Single<T>(propertyAccessExpression));
+            => Of<T>(ValueProperty<T>.Info(propertyAccessExpression));
 
         public static Func<T, object?> Of<T>(string propertyName)
-            => Of<T>(ValueProperties.Single<T>(propertyName));
+            => Of<T>(ValueProperty<T>.Info(propertyName));
 
         internal static Func<T, object?> Of<T>(PropertyInfo propertyInfo)
         {

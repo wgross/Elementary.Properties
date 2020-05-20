@@ -18,16 +18,17 @@ namespace Elementary.Properties.PropertyBags
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="instance"></param>
+        /// <param name="configure">declare optional includes or excludes</param>
         /// <returns></returns>
-        public static ReflectedPropertyBag<T> Of<T>(T instance, Action<IValuePropertiesCollectionConfig>? configure = null) where T : class
+        public static ReflectedPropertyBag<T> Of<T>(T instance, Action<IValuePropertyCollectionConfig<T>>? configure = null) where T : class
         {
             var bag = new ReflectedPropertyBag<T>(instance);
             bag.Init(
-                ValueProperties.AllCanReadAndWrite<T>(configure)
+                ValueProperty<T>.AllCanReadAndWrite(configure)
                     .Select(pi => (
-                        name: pi.Name,
-                        getter: ReflectionGetterFactory.Of<T>(pi).getter,
-                        setter: ReflectionSetterFactory.Of<T>(pi).setter)));
+                        name: pi.Property.Name,
+                        getter: ReflectionGetterFactory.Of<T>(pi.Property).getter,
+                        setter: ReflectionSetterFactory.Of<T>(pi.Property).setter)));
 
             return bag;
         }
@@ -39,16 +40,16 @@ namespace Elementary.Properties.PropertyBags
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static DynamicPropertyBag<T> Of<T>(Action<IValuePropertiesCollectionConfig>? configure = null) where T : class
+        public static DynamicPropertyBag<T> Of<T>(Action<IValuePropertyCollectionConfig<T>>? configure = null) where T : class
         {
             var bag = new DynamicPropertyBag<T>();
-            var properties = ValueProperties.All<T>().ToArray();
+            var properties = ValueProperty<T>.All().ToArray();
             bag.Init(
-               ValueProperties.AllCanReadAndWrite<T>(configure)
+               ValueProperty<T>.AllCanReadAndWrite(configure)
                    .Select(pi => (
-                       name: pi.Name,
-                       getter: DynamicMethodGetterFactory.Of<T>(pi),
-                       setter: DynamicMethodSetterFactory.Of<T>(pi))));
+                       name: pi.Property.Name,
+                       getter: DynamicMethodGetterFactory.Of<T>(pi.Property),
+                       setter: DynamicMethodSetterFactory.Of<T>(pi.Property))));
             return bag;
         }
     }
