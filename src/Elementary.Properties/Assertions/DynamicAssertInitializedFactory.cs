@@ -47,13 +47,13 @@ namespace Elementary.Properties.Assertions
             {
                 Use_Scope_if_Not_Null(builder, scope);
 
-                if (p is ValuePropertyCollectionLeafNode valueProperty)
+                if (p is ValuePropertyCollectionValue valueProperty)
                 {
-                    If_Property_Is_Default_Return_False(builder, p.Property);
+                    If_Property_Is_Default_Return_False(builder, p.Info);
                 }
-                else if (p is ValuePropertyCollectionInnerNode referenceProperty)
+                else if (p is ValuePropertyCollectionReference referenceProperty)
                 {
-                    Assert_Initialized_Of_Properties(builder, Scope_To_Property_Value(builder, referenceProperty.Property), referenceProperty.ValueProperties);
+                    Assert_Initialized_Of_Properties(builder, Scope_To_Property_Value(builder, referenceProperty.Info), referenceProperty.ValueProperties);
                 }
             }
         }

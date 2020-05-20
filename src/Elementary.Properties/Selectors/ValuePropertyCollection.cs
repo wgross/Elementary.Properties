@@ -7,26 +7,41 @@ using System.Reflection;
 
 namespace Elementary.Properties.Selectors
 {
-    public sealed class ValuePropertyCollectionLeafNode : IValuePropertyCollectionItem
+    /// <summary>
+    /// Represents a value property property in a <see cref="ValuePropertyCollection{T}"/>
+    /// </summary>
+    public sealed class ValuePropertyCollectionValue : IValuePropertyCollectionItem
     {
-        internal ValuePropertyCollectionLeafNode(PropertyInfo property)
+        internal ValuePropertyCollectionValue(PropertyInfo property)
         {
-            this.Property = property;
+            this.Info = property;
         }
 
-        public PropertyInfo Property { get; }
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public PropertyInfo Info { get; }
     }
 
-    public sealed class ValuePropertyCollectionInnerNode : IValuePropertyCollectionItem
+    /// <summary>
+    /// Refresents a reference property in a <see cref="ValuePropertyCollection{T}"/>
+    /// </summary>
+    public sealed class ValuePropertyCollectionReference : IValuePropertyCollectionItem
     {
-        internal ValuePropertyCollectionInnerNode(PropertyInfo property, IEnumerable<IValuePropertyCollectionItem> subProperties)
+        internal ValuePropertyCollectionReference(PropertyInfo property, IEnumerable<IValuePropertyCollectionItem> subProperties)
         {
-            this.Property = property;
+            this.Info = property;
             this.ValueProperties = subProperties.ToArray();
         }
 
-        public PropertyInfo Property { get; }
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public PropertyInfo Info { get; }
 
+        /// <summary>
+        /// The value properties contained in the referenced instance
+        /// </summary>
         public IEnumerable<IValuePropertyCollectionItem> ValueProperties { get; }
     }
 
@@ -39,20 +54,20 @@ namespace Elementary.Properties.Selectors
         private readonly Func<PropertyInfo, bool>[] predicates;
         private readonly List<string> excludedLeaves = new List<string>();
         private readonly List<PropertyInfo> includedLeaves = new List<PropertyInfo>();
-        private readonly List<ValuePropertyCollectionInnerNode> includedNodes = new List<ValuePropertyCollectionInnerNode>();
+        private readonly List<ValuePropertyCollectionReference> includedNodes = new List<ValuePropertyCollectionReference>();
 
         internal ValuePropertyCollection(IEnumerable<PropertyInfo> properties, IEnumerable<Func<PropertyInfo, bool>> prediates)
         {
-            this.leafProperties = properties.Select(pi => (IValuePropertyCollectionItem)new ValuePropertyCollectionLeafNode(pi)).ToArray();
+            this.leafProperties = properties.Select(pi => (IValuePropertyCollectionItem)new ValuePropertyCollectionValue(pi)).ToArray();
             this.predicates = prediates.ToArray();
         }
 
         public IEnumerator<IValuePropertyCollectionItem> GetEnumerator()
         {
-            var result = this.leafProperties.ToDictionary(keySelector: p => p.Property.Name);
+            var result = this.leafProperties.ToDictionary(keySelector: p => p.Info.Name);
             this.excludedLeaves.ForEach(ex => result.Remove(ex));
-            this.includedLeaves.ForEach(inc => result.Add(inc.Name, new ValuePropertyCollectionLeafNode(inc)));
-            this.includedNodes.ForEach(i => result.Add(i.Property.Name, i));
+            this.includedLeaves.ForEach(inc => result.Add(inc.Name, new ValuePropertyCollectionValue(inc)));
+            this.includedNodes.ForEach(i => result.Add(i.Info.Name, i));
             return result.Select(kv => kv.Value).GetEnumerator();
         }
 
@@ -75,7 +90,7 @@ namespace Elementary.Properties.Selectors
 
             var collection = (IEnumerable<IValuePropertyCollectionItem>)factoryMethod.Invoke(null, new object?[] { configure, this.predicates });
 
-            this.includedNodes.Add(new ValuePropertyCollectionInnerNode(property, collection));
+            this.includedNodes.Add(new ValuePropertyCollectionReference(property, collection));
         }
 
         #endregion IValuePropertyCollectionConfig

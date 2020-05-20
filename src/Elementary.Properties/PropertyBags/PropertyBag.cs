@@ -26,9 +26,9 @@ namespace Elementary.Properties.PropertyBags
             bag.Init(
                 ValueProperty<T>.AllCanReadAndWrite(configure)
                     .Select(pi => (
-                        name: pi.Property.Name,
-                        getter: ReflectionGetterFactory.Of<T>(pi.Property).getter,
-                        setter: ReflectionSetterFactory.Of<T>(pi.Property).setter)));
+                        name: pi.Info.Name,
+                        getter: ReflectionGetterFactory.Of<T>(pi.Info).getter,
+                        setter: ReflectionSetterFactory.Of<T>(pi.Info).setter)));
 
             return bag;
         }
@@ -47,9 +47,9 @@ namespace Elementary.Properties.PropertyBags
             bag.Init(
                ValueProperty<T>.AllCanReadAndWrite(configure)
                    .Select(pi => (
-                       name: pi.Property.Name,
-                       getter: DynamicMethodGetterFactory.Of<T>(pi.Property),
-                       setter: DynamicMethodSetterFactory.Of<T>(pi.Property))));
+                       name: pi.Info.Name,
+                       getter: DynamicMethodGetterFactory.Of<T>(pi.Info),
+                       setter: DynamicMethodSetterFactory.Of<T>(pi.Info))));
             return bag;
         }
     }

@@ -35,7 +35,7 @@ namespace Elementary.Properties.Test.Mappers
         /// Includes the properties which provide value type or string into the mapping
         /// </summary>
         /// <returns></returns>
-        public MappingBuilder<S, D> IncludeValueProperties() => this.Include(ValueProperty<S>.All().Select(p => p.Property));
+        public MappingBuilder<S, D> IncludeValueProperties() => this.Include(ValueProperty<S>.All().Select(p => p.Info));
 
         private MappingBuilder<S, D> Include(IEnumerable<PropertyInfo> properties)
         {

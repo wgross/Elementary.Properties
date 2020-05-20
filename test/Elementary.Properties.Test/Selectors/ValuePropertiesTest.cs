@@ -33,7 +33,7 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String" }, result.Select(pi => pi.Property.Name));
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String" }, result.Select(pi => pi.Info.Name));
         }
 
         #endregion Verify Type Archetypes
@@ -64,7 +64,7 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingSetter" }, result.Select(pi => pi.Property.Name));
+            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingSetter" }, result.Select(pi => pi.Info.Name));
         }
 
         [Fact]
@@ -76,7 +76,7 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingGetter" }, result.Select(pi => pi.Property.Name));
+            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingGetter" }, result.Select(pi => pi.Info.Name));
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            Assert.Equal(new[] { "Public", "Protected", "Private" }, result.Select(pi => pi.Property.Name));
+            Assert.Equal(new[] { "Public", "Protected", "Private" }, result.Select(pi => pi.Info.Name));
         }
 
         [Fact]

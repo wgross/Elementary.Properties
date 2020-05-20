@@ -97,29 +97,29 @@ namespace Elementary.Properties.Selectors
         {
             onError ??= delegate { };
 
-            var rightProperyMap = rightProperties.ToDictionary(pi => pi.Property.Name);
+            var rightProperyMap = rightProperties.ToDictionary(pi => pi.Info.Name);
 
             foreach (var lpi in leftProperties)
             {
-                var exists = rightProperyMap.TryGetValue(lpi.Property.Name, out var rpi);
+                var exists = rightProperyMap.TryGetValue(lpi.Info.Name, out var rpi);
                 if (!exists)
                 {
-                    onError(JoinError.RightPropertyMissing, (lpi.Property.Name, lpi.Property.PropertyType));
+                    onError(JoinError.RightPropertyMissing, (lpi.Info.Name, lpi.Info.PropertyType));
                 }
-                else if (lpi.Property.PropertyType != rpi.Property.PropertyType)
+                else if (lpi.Info.PropertyType != rpi.Info.PropertyType)
                 {
-                    rightProperyMap.Remove(rpi.Property.Name);
-                    onError(JoinError.RightPropertyType, (lpi.Property.Name, lpi.Property.PropertyType));
+                    rightProperyMap.Remove(rpi.Info.Name);
+                    onError(JoinError.RightPropertyType, (lpi.Info.Name, lpi.Info.PropertyType));
                 }
                 else
                 {
-                    rightProperyMap.Remove(rpi.Property.Name);
-                    yield return new ValuePropertySymmetricPair(lpi.Property, rpi.Property);
+                    rightProperyMap.Remove(rpi.Info.Name);
+                    yield return new ValuePropertySymmetricPair(lpi.Info, rpi.Info);
                 }
             }
             foreach (var rpi in rightProperyMap.Values)
             {
-                onError(JoinError.LeftPropertyMissing, (rpi.Property.Name, rpi.Property.PropertyType));
+                onError(JoinError.LeftPropertyMissing, (rpi.Info.Name, rpi.Info.PropertyType));
             }
             yield break;
         }

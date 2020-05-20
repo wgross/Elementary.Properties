@@ -31,7 +31,7 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.Property.Name).ToArray());
+            Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.Info.Name).ToArray());
         }
 
         //[Fact]
@@ -58,7 +58,7 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.Property.Name).ToArray());
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.Info.Name).ToArray());
         }
 
         public class AccessorArchetypes
@@ -103,9 +103,9 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            var referenceProperty = (ValuePropertyCollectionInnerNode)(result.Single(p => p.Property.Name == "Reference"));
+            var referenceProperty = (ValuePropertyCollectionReference)(result.Single(p => p.Info.Name == "Reference"));
 
-            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingSetter" }, referenceProperty.ValueProperties.Select(pi => pi.Property.Name).ToArray());
+            Assert.Equal(new[] { "Public", "Protected", "Private", "MissingSetter" }, referenceProperty.ValueProperties.Select(pi => pi.Info.Name).ToArray());
         }
     }
 }
