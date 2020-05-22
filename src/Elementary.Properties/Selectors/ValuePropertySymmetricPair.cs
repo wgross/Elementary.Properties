@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 
 namespace Elementary.Properties.Selectors
 {
@@ -15,6 +16,12 @@ namespace Elementary.Properties.Selectors
         /// </summary>
         public PropertyInfo Left { get; }
 
+        internal Type LeftPropertyType => this.Left.PropertyType;
+
+        internal MethodInfo LeftGetter() => this.Left.GetGetMethod(nonPublic: true);
+
         internal PropertyInfo Right { get; }
+
+        internal MethodInfo RightGetter() => this.Right.GetGetMethod(nonPublic: true);
     }
 }

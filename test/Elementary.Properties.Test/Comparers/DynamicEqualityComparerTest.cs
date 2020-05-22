@@ -213,7 +213,7 @@ namespace Elementary.Properties.Test.Comparers
                 Collection1 = new[] { 1 }
             };
 
-            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeValuesOf(d => d.Reference1));
+            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeNested(d => d.Reference1));
 
             // ACT
 
@@ -245,7 +245,7 @@ namespace Elementary.Properties.Test.Comparers
                 Collection1 = new[] { 1 }
             };
 
-            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeValuesOf(d => d.Reference1));
+            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeNested(d => d.Reference1));
 
             // ACT
 
@@ -284,7 +284,7 @@ namespace Elementary.Properties.Test.Comparers
                 Collection1 = new[] { 1 }
             };
 
-            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeValuesOf(d => d.Reference1));
+            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeNested(d => d.Reference1));
 
             // ACT
 
@@ -316,7 +316,7 @@ namespace Elementary.Properties.Test.Comparers
                 Collection1 = new[] { 1 }
             };
 
-            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeValuesOf(d => d.Reference1));
+            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeNested(d => d.Reference1));
 
             // ACT
 
@@ -368,7 +368,7 @@ namespace Elementary.Properties.Test.Comparers
                 Collection1 = new[] { 2 }
             };
 
-            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeValuesOf(d => d.Reference1));
+            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeNested(d => d.Reference1));
 
             // ACT
 
@@ -460,7 +460,7 @@ namespace Elementary.Properties.Test.Comparers
                 Collection1 = new[] { 1 }
             };
 
-            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeValuesOf(d => d.Reference1));
+            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeNested(d => d.Reference1));
 
             // ACT
 
@@ -500,7 +500,7 @@ namespace Elementary.Properties.Test.Comparers
                 Collection1 = new[] { 1 }
             };
 
-            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeValuesOf(d => d.Reference1));
+            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeNested(d => d.Reference1));
 
             // ACT
 
@@ -543,7 +543,7 @@ namespace Elementary.Properties.Test.Comparers
                 Collection1 = new[] { 1 }
             };
 
-            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeValuesOf(d => d.Reference1));
+            var comparer = DynamicEqualityComparerFactory.Of<Data1>(configure: c => c.IncludeNested(d => d.Reference1));
 
             // ACT
 

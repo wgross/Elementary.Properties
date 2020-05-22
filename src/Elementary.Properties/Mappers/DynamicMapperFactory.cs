@@ -17,9 +17,9 @@ namespace Elementary.Properties.Mappers
         /// <typeparam name="D"></typeparam>
         /// <param name="configure"></param>
         /// <returns></returns>
-        public static Action<S, D> Of<S, D>(Action<IValuePropertyMappingConfiguration<S, D>>? configure = null)
+        public static Action<S, D> Of<S, D>(Action<IValuePropertyPairCollectionConfiguration<S, D>>? configure = null)
         {
-            var propertyPairs = ValueProperty<S>.Join<D>(leftProperties: ValueProperty<S>.AllCanRead(), rightProperties: ValueProperty<D>.AllCanWrite());
+            var propertyPairs = ValuePropertyPair<S,D>.Join(leftProperties: ValueProperty<S>.AllCanRead(), rightProperties: ValueProperty<D>.AllCanWrite());
             configure?.Invoke(propertyPairs);
             return DynamicMappingOperation<S, D>(propertyPairs);
         }

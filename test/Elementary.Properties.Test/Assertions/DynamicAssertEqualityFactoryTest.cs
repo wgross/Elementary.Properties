@@ -46,6 +46,39 @@ namespace Elementary.Properties.Test.Assertions
         }
 
         [Fact]
+        public void AssertValuesAreEqual_accepts_both_null()
+        {
+            // ARRANGE
+
+            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>();
+
+            // ACT
+
+            var result = areEqual(null, null);
+
+            // ASSERT
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void AssertValuesAreEqual_rejects_one_null()
+        {
+            // ARRANGE
+
+            var data1 = new Data1();
+            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>();
+
+            // ACT
+
+            var result = areEqual(data1, null);
+
+            // ASSERT
+
+            Assert.False(result);
+        }
+
+        [Fact]
         public void AssertValuesAreEqual_rejects_different_values()
         {
             // ARRANGE
@@ -106,7 +139,7 @@ namespace Elementary.Properties.Test.Assertions
                     Integer = 2
                 }
             };
-            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>();
+            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>(configure: c => c.IncludeNested(n => n.Reference));
 
             // ACT
 
@@ -115,6 +148,57 @@ namespace Elementary.Properties.Test.Assertions
             // ASSERT
 
             Assert.False(result);
+        }
+
+        [Fact]
+        public void AssertValuesAreEqual_rejects_one_nested_classes_is_null()
+        {
+            // ARRANGE
+
+            var data1 = new Data1
+            {
+                Reference = new Data1
+                {
+                    Integer = 1
+                }
+            };
+            var data2 = new Data2
+            {
+                Reference = null
+            };
+            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>(configure: c => c.IncludeNested(n => n.Reference));
+
+            // ACT
+
+            var result = areEqual(data1, data2);
+
+            // ASSERT
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void AssertValuesAreEqual_accepts_both_nested_classes_null()
+        {
+            // ARRANGE
+
+            var data1 = new Data1
+            {
+                Reference = null
+            };
+            var data2 = new Data2
+            {
+                Reference = null
+            };
+            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>(configure: c => c.IncludeNested(n => n.Reference));
+
+            // ACT
+
+            var result = areEqual(data1, data2);
+
+            // ASSERT
+
+            Assert.True(result);
         }
     }
 }

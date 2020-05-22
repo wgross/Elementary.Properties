@@ -53,7 +53,7 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeValuesOf(d => d.Reference));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference));
 
             // ACT
 
@@ -74,7 +74,7 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeValuesOf(d => d.Reference));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference));
 
             // ACT
 
@@ -99,7 +99,7 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeValuesOf(d => d.Reference));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference));
 
             // ACT
 
@@ -124,7 +124,7 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeValuesOf(d => d.Reference, i => i.IncludeValuesOf(i => i.Reference)));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference, i => i.IncludeNested(i => i.Reference)));
 
             // ACT
 
@@ -150,7 +150,7 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeValuesOf(d => d.Reference, i => i.Exclude(nameof(Data1.String))));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference, i => i.Exclude(nameof(Data1.String))));
 
             // ACT
 
@@ -176,7 +176,7 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeValuesOf(d => d.Reference, i => i.IncludeValuesOf(i => i.Reference)));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference, i => i.IncludeNested(i => i.Reference)));
 
             // ACT
 

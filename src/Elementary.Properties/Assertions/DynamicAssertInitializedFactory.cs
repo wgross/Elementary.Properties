@@ -49,11 +49,11 @@ namespace Elementary.Properties.Assertions
 
                 if (p is ValuePropertyCollectionValue valueProperty)
                 {
-                    If_Property_Is_Default_Return_False(builder, p.Info);
+                    If_Property_Is_Default_Return_False(builder, valueProperty);
                 }
                 else if (p is ValuePropertyCollectionReference referenceProperty)
                 {
-                    Assert_Initialized_Of_Properties(builder, Scope_To_Property_Value(builder, referenceProperty.Info), referenceProperty.ValueProperties);
+                    Assert_Initialized_Of_Properties(builder, Scope_To_Property_Value(builder, referenceProperty), referenceProperty.NestedProperties);
                 }
             }
         }
@@ -66,10 +66,10 @@ namespace Elementary.Properties.Assertions
             return scope;
         }
 
-        private static LocalBuilder Scope_To_Property_Value(ILGenerator builder, PropertyInfo property)
+        private static LocalBuilder Scope_To_Property_Value(ILGenerator builder, ValuePropertyCollectionReference property)
         {
             var scope = builder.DeclareLocal(property.PropertyType);
-            builder.Emit(OpCodes.Callvirt, property.GetGetMethod(nonPublic: true));
+            builder.Emit(OpCodes.Callvirt, property.Getter());
             builder.Emit(OpCodes.Stloc, scope);
             return scope;
         }
@@ -90,10 +90,10 @@ namespace Elementary.Properties.Assertions
             builder.Emit(OpCodes.Ldloc, scope);
         }
 
-        private static void If_Property_Is_Default_Return_False(ILGenerator builder, PropertyInfo property)
+        private static void If_Property_Is_Default_Return_False(ILGenerator builder, ValuePropertyCollectionValue property)
         {
             // push the property vaue on the stack
-            builder.Emit(OpCodes.Callvirt, property.GetGetMethod(nonPublic: true));
+            builder.Emit(OpCodes.Callvirt, property.Getter());
 
             // if null return false
             var endOfCondition = builder.DefineLabel();

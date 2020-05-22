@@ -21,6 +21,21 @@ namespace Elementary.Properties.Selectors
         /// <inheritdoc/>
         /// </summary>
         public PropertyInfo Info { get; }
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public string PropertyName => this.Info.Name;
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public Type PropertyType => this.Info.PropertyType;
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public MethodInfo Getter() => this.Info.GetGetMethod(nonPublic: true);
     }
 
     /// <summary>
@@ -31,7 +46,7 @@ namespace Elementary.Properties.Selectors
         internal ValuePropertyCollectionReference(PropertyInfo property, IEnumerable<IValuePropertyCollectionItem> subProperties)
         {
             this.Info = property;
-            this.ValueProperties = subProperties.ToArray();
+            this.NestedProperties = subProperties.ToArray();
         }
 
         /// <summary>
@@ -40,9 +55,24 @@ namespace Elementary.Properties.Selectors
         public PropertyInfo Info { get; }
 
         /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public string PropertyName => this.Info.Name;
+
+        /// <summary>
         /// The value properties contained in the referenced instance
         /// </summary>
-        public IEnumerable<IValuePropertyCollectionItem> ValueProperties { get; }
+        public IEnumerable<IValuePropertyCollectionItem> NestedProperties { get; }
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public Type PropertyType => this.Info.PropertyType;
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public MethodInfo Getter() => this.Info.GetGetMethod(nonPublic: true);
     }
 
     /// <summary>
@@ -53,7 +83,8 @@ namespace Elementary.Properties.Selectors
         private readonly IEnumerable<IValuePropertyCollectionItem> leafProperties;
         private readonly Func<PropertyInfo, bool>[] predicates;
         private readonly List<string> excludedLeaves = new List<string>();
-        private readonly List<PropertyInfo> includedLeaves = new List<PropertyInfo>();
+
+        //private readonly List<PropertyInfo> includedLeaves = new List<PropertyInfo>();
         private readonly List<ValuePropertyCollectionReference> includedNodes = new List<ValuePropertyCollectionReference>();
 
         internal ValuePropertyCollection(IEnumerable<PropertyInfo> properties, IEnumerable<Func<PropertyInfo, bool>> prediates)
@@ -70,7 +101,6 @@ namespace Elementary.Properties.Selectors
         {
             var result = this.leafProperties.ToDictionary(keySelector: p => p.Info.Name);
             this.excludedLeaves.ForEach(ex => result.Remove(ex));
-            this.includedLeaves.ForEach(inc => result.Add(inc.Name, new ValuePropertyCollectionValue(inc)));
             this.includedNodes.ForEach(i => result.Add(i.Info.Name, i));
             return result.Select(kv => kv.Value).GetEnumerator();
         }
@@ -79,11 +109,19 @@ namespace Elementary.Properties.Selectors
 
         #region IValuePropertyCollectionConfig
 
-        void IValuePropertyCollectionConfig<T>.Exclude(params string[] propertyNames) => this.excludedLeaves.AddRange(propertyNames);
+        void IValuePropertyCollectionConfig<T>.Exclude(params string[] propertyNames)
+        {
+            foreach (var propertyName in propertyNames)
+                if (this.leafProperties.Any(pi => pi.PropertyName.Equals(propertyName)))
+                {
+                    this.excludedLeaves.AddRange(propertyNames);
+                }
+                else throw new ArgumentException($"Property '{propertyName}' doesn't exist in collection.", nameof(propertyNames));
+        }
 
         void IValuePropertyCollectionConfig<T>.Exclude(Expression<Func<T, object?>> propertyAccess) => this.excludedLeaves.Add(Property<T>.Info(propertyAccess).Name);
 
-        void IValuePropertyCollectionConfig<T>.IncludeValuesOf(Expression<Func<T, object?>> propertyAccess, Action<IValuePropertyCollectionConfig<T>>? configure)
+        void IValuePropertyCollectionConfig<T>.IncludeNested(Expression<Func<T, object?>> propertyAccess, Action<IValuePropertyCollectionConfig<T>>? configure)
         {
             var property = Property<T>.Info(propertyAccess);
 

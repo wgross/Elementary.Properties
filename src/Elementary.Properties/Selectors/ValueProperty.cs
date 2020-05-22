@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -52,6 +51,13 @@ namespace Elementary.Properties.Selectors
         public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfig<T>>? configure = null)
             => All(configure, IsValueType);
 
+        public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfig<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
+        {
+            var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates);
+            configure?.Invoke(collection);
+            return collection;
+        }
+
         /// <summary>
         /// Retrieves all value (or string) type properties of <typeparamref name="T"/> which have public or non-public getter.
         /// </summary>
@@ -78,51 +84,6 @@ namespace Elementary.Properties.Selectors
         /// <returns></returns>
         public static IEnumerable<IValuePropertyCollectionItem> AllCanReadAndWrite(Action<IValuePropertyCollectionConfig<T>>? configure = null)
             => All(configure, IsValueType, CanRead, CanWrite);
-
-        public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfig<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
-        {
-            var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates);
-            configure?.Invoke(collection);
-            return collection;
-        }
-
-        public static ValuePropertyPairCollection<T, D> Join<D>(IEnumerable<IValuePropertyCollectionItem> leftProperties, IEnumerable<IValuePropertyCollectionItem> rightProperties, Action<JoinError, (string name, Type propertyType)>? onError = null, Action<IValuePropertyPairConfiguration> configure = null)
-        {
-            var collection = new ValuePropertyPairCollection<T, D>(JoinImpl(leftProperties, rightProperties, onError));
-            configure?.Invoke(collection);
-            return collection;
-        }
-
-        private static IEnumerable<ValuePropertySymmetricPair> JoinImpl(IEnumerable<IValuePropertyCollectionItem> leftProperties, IEnumerable<IValuePropertyCollectionItem> rightProperties, Action<JoinError, (string name, Type propertyType)>? onError = null)
-        {
-            onError ??= delegate { };
-
-            var rightProperyMap = rightProperties.ToDictionary(pi => pi.Info.Name);
-
-            foreach (var lpi in leftProperties)
-            {
-                var exists = rightProperyMap.TryGetValue(lpi.Info.Name, out var rpi);
-                if (!exists)
-                {
-                    onError(JoinError.RightPropertyMissing, (lpi.Info.Name, lpi.Info.PropertyType));
-                }
-                else if (lpi.Info.PropertyType != rpi.Info.PropertyType)
-                {
-                    rightProperyMap.Remove(rpi.Info.Name);
-                    onError(JoinError.RightPropertyType, (lpi.Info.Name, lpi.Info.PropertyType));
-                }
-                else
-                {
-                    rightProperyMap.Remove(rpi.Info.Name);
-                    yield return new ValuePropertySymmetricPair(lpi.Info, rpi.Info);
-                }
-            }
-            foreach (var rpi in rightProperyMap.Values)
-            {
-                onError(JoinError.LeftPropertyMissing, (rpi.Info.Name, rpi.Info.PropertyType));
-            }
-            yield break;
-        }
 
         #region Query properties from a Type
 

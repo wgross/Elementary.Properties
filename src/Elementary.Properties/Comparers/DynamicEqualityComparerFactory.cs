@@ -37,7 +37,7 @@ namespace Elementary.Properties.Comparers
 
             var scope = DeclareLocal_Scope_From_Arguments<T>(builder);
 
-            Is_Scope_Is_Null_Same_Return(builder, scope);
+            If_Scope_Is_Null_Both_Sides_Return(builder, scope);
 
             Compare_Properties(builder, scope, properties);
 
@@ -66,9 +66,9 @@ namespace Elementary.Properties.Comparers
             var scope = DeclareLocal_Scope_From_Properties(builder, parentScope, referenceProperty.Info);
             var gotoSkipCompare = builder.DefineLabel();
 
-            If_Scope_Is_Null_At_Both_Sides_Skip(builder, scope, gotoSkipCompare, referenceProperty.Info);
+            If_Scope_Is_Null_At_Both_Sides_Skip(builder, scope, gotoSkipCompare);
 
-            Compare_Properties(builder, scope, referenceProperty.ValueProperties);
+            Compare_Properties(builder, scope, referenceProperty.NestedProperties);
 
             builder.MarkLabel(gotoSkipCompare);
         }
@@ -91,7 +91,7 @@ namespace Elementary.Properties.Comparers
             builder.MarkLabel(gotoValuesAreEqual);
         }
 
-        private static void If_Scope_Is_Null_At_Both_Sides_Skip(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, Label gotoEndOfBlock, PropertyInfo property)
+        private static void If_Scope_Is_Null_At_Both_Sides_Skip(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, Label gotoEndOfBlock)
         {
             var gotoReturnFalse = builder.DefineLabel();
             var gotoContinue = builder.DefineLabel();
@@ -135,7 +135,7 @@ namespace Elementary.Properties.Comparers
             return typeof(EqualityComparer<>).MakeGenericType(type).GetProperty("Default");
         }
 
-        private static void Is_Scope_Is_Null_Same_Return(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope)
+        private static void If_Scope_Is_Null_Both_Sides_Return(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope)
         {
             // if(object.ReferenceEquals(left, right))
             //   return true;
@@ -267,7 +267,7 @@ namespace Elementary.Properties.Comparers
 
             If_Scope_Is_Null_Skip(builder, scope, gotoSkipHash);
 
-            Hash_Properties(builder, hashCode, addHashCode, scope, property.ValueProperties);
+            Hash_Properties(builder, hashCode, addHashCode, scope, property.NestedProperties);
 
             builder.MarkLabel(gotoSkipHash);
         }

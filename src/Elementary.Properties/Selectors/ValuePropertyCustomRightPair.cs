@@ -17,5 +17,10 @@ namespace Elementary.Properties.Selectors
         public PropertyInfo Left { get; }
 
         internal Action<R, object> RightSetter { get; }
+
+        public MethodInfo LeftGetter()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
