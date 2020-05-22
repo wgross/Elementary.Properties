@@ -62,6 +62,10 @@ namespace Elementary.Properties.Selectors
             this.predicates = prediates.ToArray();
         }
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        /// <returns></returns>
         public IEnumerator<IValuePropertyCollectionItem> GetEnumerator()
         {
             var result = this.leafProperties.ToDictionary(keySelector: p => p.Info.Name);
@@ -76,6 +80,8 @@ namespace Elementary.Properties.Selectors
         #region IValuePropertyCollectionConfig
 
         void IValuePropertyCollectionConfig<T>.Exclude(params string[] propertyNames) => this.excludedLeaves.AddRange(propertyNames);
+
+        void IValuePropertyCollectionConfig<T>.Exclude(Expression<Func<T, object?>> propertyAccess) => this.excludedLeaves.Add(Property<T>.Info(propertyAccess).Name);
 
         void IValuePropertyCollectionConfig<T>.IncludeValuesOf(Expression<Func<T, object?>> propertyAccess, Action<IValuePropertyCollectionConfig<T>>? configure)
         {

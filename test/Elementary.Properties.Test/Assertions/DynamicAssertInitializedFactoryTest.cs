@@ -146,6 +146,32 @@ namespace Elementary.Properties.Test.Assertions
         }
 
         [Fact]
+        public void DynamicAssertInitializedFactory_accepts_defaultOfT_if_excluded_in_nested_class()
+        {
+            // ARRANGE
+
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeValuesOf(d => d.Reference, i => i.Exclude(nameof(Data1.String))));
+
+            // ACT
+
+            var result = assertInitialized(new Data1
+            {
+                Integer = 1,
+                String = "1",
+                Reference = new Data1
+                {
+                    Integer = 2,
+                    String = null, // <-- default but excluded
+                    Reference = null // <-- default, but not included,
+                }
+            });
+
+            // ASSERT
+
+            Assert.True(result);
+        }
+
+        [Fact]
         public void DynamicAssertInitializedFactory_accepts_included_reference_2_level_nested()
         {
             // ARRANGE

@@ -34,6 +34,18 @@ namespace Elementary.Properties.Test.Selectors
             Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.Info.Name).ToArray());
         }
 
+        [Fact]
+        public void ValueProperties_excludes_property_by_expression()
+        {
+            // ACT
+
+            var result = ValueProperty<PropertyTypeArchetypes>.All(c => c.Exclude(p =>p.Integer));
+
+            // ASSERT
+
+            Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.Info.Name).ToArray());
+        }
+
         //[Fact]
         //public void ValueProperties_rejects_include_from_wrong_class()
         //{
