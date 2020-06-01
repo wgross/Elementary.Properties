@@ -12,8 +12,6 @@ namespace Elementary.Properties.Selectors
     /// <typeparam name="T"></typeparam>
     public static class Property<T>
     {
-        private const BindingFlags CommonBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-
         /// <summary>
         /// Select a property info of the property specified by the given member access expression <paramref name="memberAccess"/> from type
         /// <typeparamref name="T"/>. If the property access is chained an <see cref="InvalidOperationException"/> is thrown
@@ -78,10 +76,27 @@ namespace Elementary.Properties.Selectors
         }
 
         /// <summary>
+        /// Returns a property chain from the given property names in <paramref name="propertyNames"/> or throws
+        /// if a path can't be built
+        /// </summary>
+        /// <param name="propertyNames"></param>
+        /// <returns></returns>
+        public static IEnumerable<PropertyInfo> InfoPath(params string[] propertyNames)
+        {
+            var type = typeof(T);
+            foreach (var name in propertyNames)
+            {
+                var currentProperty = Property.Info(type, name);
+                yield return currentProperty;
+                type = currentProperty.PropertyType;
+            }
+        }
+
+        /// <summary>
         /// Select a property info of the property specified by the given name <paramref name="propertyName"/> from type
         /// <typeparamref name="T"/>
         /// </summary>
-        public static PropertyInfo Info(string name) => typeof(T).GetProperty(name, CommonBindingFlags);
+        public static PropertyInfo Info(string name) => Property.Info(typeof(T), name);
 
         /// <summary>
         /// Returns all properties iof <typeparamref name="T"/> which are accepted by all given <paramref name="filters"/>.
@@ -89,7 +104,14 @@ namespace Elementary.Properties.Selectors
         /// <param name="filters"></param>
         /// <returns></returns>
         public static IEnumerable<PropertyInfo> Infos(params Func<PropertyInfo, bool>[] filters) => filters.Aggregate(
-            seed: typeof(T).GetProperties(CommonBindingFlags).AsEnumerable(),
+            seed: typeof(T).GetProperties(Property.CommonBindingFlags).AsEnumerable(),
             func: (accumulate, filter) => accumulate.Where(filter));
+    }
+
+    internal class Property
+    {
+        internal const BindingFlags CommonBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        internal static PropertyInfo Info(Type type, string name) => type.GetProperty(name, CommonBindingFlags) ?? throw new InvalidOperationException($"Property(name='{name}') wasn't found in type(name='{type.Name}')");
     }
 }

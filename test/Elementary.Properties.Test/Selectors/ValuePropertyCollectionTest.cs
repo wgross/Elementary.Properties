@@ -17,37 +17,32 @@ namespace Elementary.Properties.Test.Selectors
 
             public string String { get; set; }
 
-            public PropertyTypeArchetypes Reference { set; get; }
+            public PropertyTypeArchetypes2 Reference { set; get; }
 
             public int[] Collection { get; set; }
         }
 
-        [Fact]
-        public void ValueProperties_excludes_property_by_name()
+        public class PropertyTypeArchetypes2
         {
-            // ACT
+            public int Integer2 { get; set; }
 
-            var result = ValueProperty<PropertyTypeArchetypes>.All(c => c.Exclude(nameof(PropertyTypeArchetypes.Integer)));
+            public Guid Struct2 { get; set; }
 
-            // ASSERT
+            public DateTime? Nullable2 { get; set; }
 
-            Assert.Equal(new[] { "Struct", "Nullable", "String" }, result.Select(pi => pi.PropertyName).ToArray());
+            public string String2 { get; set; }
+
+            public PropertyTypeArchetypes Reference2 { set; get; }
+
+            public int[] Collection2 { get; set; }
         }
 
         [Fact]
-        public void ValueProperties_excluding_property_by_name_fails_on_unknown_property()
-        {
-            // ACT & ASSERT
-
-            Assert.Throws<ArgumentException>(() => ValueProperty<PropertyTypeArchetypes>.All(c => c.Exclude("Unknown")));
-        }
-
-        [Fact]
-        public void ValueProperties_excludes_property_by_expression()
+        public void ValueProperties_excludes_property()
         {
             // ACT
 
-            var result = ValueProperty<PropertyTypeArchetypes>.All(c => c.Exclude(p => p.Integer));
+            var result = ValueProperty<PropertyTypeArchetypes>.All(c => c.ExcludeValue(p => p.Integer));
 
             // ASSERT
 
@@ -66,12 +61,116 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName).ToArray());
-            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String" }, result
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName));
+
+            var result_level1 = result
                 .OfType<ValuePropertyCollectionReference>()
                 .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes.Reference))
                 .NestedProperties
-                .Select(pi => pi.PropertyName).ToArray());
+                .Select(pi => pi.PropertyName).ToArray();
+
+            Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2" }, result_level1);
+        }
+
+        [Fact]
+        public void ValueProperties_excludes_property_in_nested_class()
+        {
+            // ACT
+
+            var result = ValueProperty<PropertyTypeArchetypes>.All(c =>
+            {
+                c.IncludeNested(p => p.Reference);
+                c.ExcludeValue(p => p.Reference.Integer2);
+            });
+
+            // ASSERT
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName));
+
+            var result_level1 = result
+                .OfType<ValuePropertyCollectionReference>()
+                .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes.Reference))
+                .NestedProperties
+                .Select(pi => pi.PropertyName).ToArray();
+
+            Assert.Equal(new[] { "Struct2", "Nullable2", "String2" }, result_level1);
+        }
+
+        [Fact]
+        public void ValueProperties_excluding_property_in_nested_class_rejects_unkown_nested()
+        {
+            // ACT
+
+            var result = Assert.Throws<InvalidOperationException>(() => ValueProperty<PropertyTypeArchetypes>.All(c =>
+             {
+                 //missing//c.IncludeNested(p => p.Reference);
+                 c.ExcludeValue(p => p.Reference.Integer2);
+             }));
+
+            // ASSERT
+
+            Assert.Equal($"Exclude property(name='Integer2') failed: Nested property(name='Reference') isn't included", result.Message);
+        }
+
+        [Fact]
+        public void ValueProperties_includes_nested2_class()
+        {
+            // ACT
+
+            var result = ValueProperty<PropertyTypeArchetypes>.All(c =>
+            {
+                c.IncludeNested(p => p.Reference);
+                c.IncludeNested(p => p.Reference.Reference2);
+            });
+
+            // ASSERT
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName).ToArray());
+
+            var result_level1 = result
+                .OfType<ValuePropertyCollectionReference>()
+                .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes.Reference))
+                .NestedProperties;
+
+            Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2", "Reference2" }, result_level1.Select(pi => pi.PropertyName));
+
+            var result_level2 = result_level1
+                .OfType<ValuePropertyCollectionReference>()
+                .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes2.Reference2))
+                .NestedProperties;
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String" }, result_level2.Select(pi => pi.PropertyName));
+        }
+
+        [Fact]
+        public void ValueProperties_excludes_property_in_nested2_class()
+        {
+            // ACT
+
+            var result = ValueProperty<PropertyTypeArchetypes>.All(c =>
+            {
+                c.IncludeNested(p => p.Reference);
+                c.IncludeNested(p => p.Reference.Reference2);
+                c.ExcludeValue(p => p.Reference.Reference2.Integer);
+            });
+
+            // ASSERT
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName).ToArray());
+
+            var result_level1 = result
+                .OfType<ValuePropertyCollectionReference>()
+                .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes.Reference))
+                .NestedProperties;
+
+            Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2", "Reference2" }, result_level1.Select(pi => pi.PropertyName));
+
+            var result_level2 = result_level1
+                .OfType<ValuePropertyCollectionReference>()
+                .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes2.Reference2))
+                .NestedProperties;
+
+            Assert.Equal(new[] { "Struct", "Nullable", "String" }, result_level2.Select(pi => pi.PropertyName));
         }
 
         public class AccessorArchetypes

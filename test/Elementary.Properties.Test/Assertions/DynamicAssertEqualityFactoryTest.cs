@@ -151,7 +151,7 @@ namespace Elementary.Properties.Test.Assertions
         }
 
         [Fact]
-        public void AssertValuesAreEqual_rejects_one_nested_classes_is_null()
+        public void AssertValuesAreEqual_rejects_right_nested_classes_is_null()
         {
             // ARRANGE
 
@@ -165,6 +165,33 @@ namespace Elementary.Properties.Test.Assertions
             var data2 = new Data2
             {
                 Reference = null
+            };
+            var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>(configure: c => c.IncludeNested(n => n.Reference));
+
+            // ACT
+
+            var result = areEqual(data1, data2);
+
+            // ASSERT
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void AssertValuesAreEqual_rejects_left_nested_classes_is_null()
+        {
+            // ARRANGE
+
+            var data1 = new Data1
+            {
+                Reference = null
+            };
+            var data2 = new Data2
+            {
+                Reference = new Data2
+                {
+                    Integer = 2
+                }
             };
             var areEqual = DynamicAssertEqualityFactory.Of<Data1, Data2>(configure: c => c.IncludeNested(n => n.Reference));
 

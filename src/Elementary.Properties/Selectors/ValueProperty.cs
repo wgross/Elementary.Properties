@@ -16,7 +16,7 @@ namespace Elementary.Properties.Selectors
     /// Retruevs several sets of properties from type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class ValueProperty<T>
+    public sealed class ValueProperty<T>
     {
         private const BindingFlags defaultBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
@@ -94,5 +94,19 @@ namespace Elementary.Properties.Selectors
         private static bool CanWrite(PropertyInfo pi) => pi.CanWrite;
 
         #endregion Query properties from a Type
+    }
+
+    internal sealed class ValueProperty
+    {
+        internal static ValuePropertyCollection All(Type type, params Func<PropertyInfo, bool>[] predicates)
+        {
+            var configureDelegateType = typeof(Action<>).MakeGenericType(typeof(IValuePropertyCollectionConfig<>).MakeGenericType(type));
+
+            var factoryMethod = typeof(ValueProperty<>)
+                .MakeGenericType(type)
+                .GetMethod("All", new[] { configureDelegateType, typeof(Func<PropertyInfo, bool>[]) });
+
+            return (ValuePropertyCollection)factoryMethod.Invoke(null, new object?[] { null, predicates });
+        }
     }
 }

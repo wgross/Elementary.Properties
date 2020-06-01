@@ -3,9 +3,9 @@ using System.Reflection;
 
 namespace Elementary.Properties.Selectors
 {
-    internal class ValuePropertySymmetricPair : IValuePropertyPair
+    internal class ValuePropertyPairValue : IValuePropertyPair
     {
-        internal ValuePropertySymmetricPair(PropertyInfo left, PropertyInfo right)
+        internal ValuePropertyPairValue(PropertyInfo left, PropertyInfo right)
         {
             this.Left = left;
             this.Right = right;
@@ -23,5 +23,7 @@ namespace Elementary.Properties.Selectors
         internal PropertyInfo Right { get; }
 
         internal MethodInfo RightGetter() => this.Right.GetGetMethod(nonPublic: true);
+
+        internal MethodInfo RightSetter() => this.Right.GetSetMethod(nonPublic: true);
     }
 }

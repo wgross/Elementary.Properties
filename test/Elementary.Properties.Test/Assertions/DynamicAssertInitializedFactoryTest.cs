@@ -11,6 +11,17 @@ namespace Elementary.Properties.Test.Assertions
 
             public string String { get; set; }
 
+            public Data2 Reference { set; get; }
+
+            public int[] Collection { get; set; }
+        }
+
+        public class Data2
+        {
+            public int Integer { get; set; }
+
+            public string String { get; set; }
+
             public Data1 Reference { set; get; }
 
             public int[] Collection { get; set; }
@@ -82,7 +93,7 @@ namespace Elementary.Properties.Test.Assertions
             {
                 Integer = 1,
                 String = string.Empty,
-                Reference = new Data1
+                Reference = new Data2
                 {
                     Integer = 1,
                     String = string.Empty
@@ -107,7 +118,7 @@ namespace Elementary.Properties.Test.Assertions
             {
                 Integer = 1,
                 String = string.Empty,
-                Reference = new Data1
+                Reference = new Data2
                 {
                     Integer = 0, // <-- default
                     String = string.Empty
@@ -124,7 +135,11 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference, i => i.IncludeNested(i => i.Reference)));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c =>
+            {
+                c.IncludeNested(d => d.Reference);
+                c.IncludeNested(i => i.Reference.Reference);
+            });
 
             // ACT
 
@@ -132,7 +147,7 @@ namespace Elementary.Properties.Test.Assertions
             {
                 Integer = 1,
                 String = "1",
-                Reference = new Data1
+                Reference = new Data2
                 {
                     Integer = 2,
                     String = "2",
@@ -150,7 +165,11 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference, i => i.Exclude(nameof(Data1.String))));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c =>
+            {
+                c.IncludeNested(d => d.Reference);
+                c.ExcludeValue(d => d.Reference.String);
+            });
 
             // ACT
 
@@ -158,7 +177,7 @@ namespace Elementary.Properties.Test.Assertions
             {
                 Integer = 1,
                 String = "1",
-                Reference = new Data1
+                Reference = new Data2
                 {
                     Integer = 2,
                     String = null, // <-- default but excluded
@@ -176,7 +195,11 @@ namespace Elementary.Properties.Test.Assertions
         {
             // ARRANGE
 
-            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c => c.IncludeNested(d => d.Reference, i => i.IncludeNested(i => i.Reference)));
+            var assertInitialized = DynamicAssertInitializedFactory.Of<Data1>(c =>
+            {
+                //c.IncludeNested(d => d.Reference);
+                c.IncludeNested(d => d.Reference.Reference);
+            });
 
             // ACT
 
@@ -184,7 +207,7 @@ namespace Elementary.Properties.Test.Assertions
             {
                 Integer = 1,
                 String = "1",
-                Reference = new Data1
+                Reference = new Data2
                 {
                     Integer = 2,
                     String = "2",

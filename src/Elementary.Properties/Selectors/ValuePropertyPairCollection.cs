@@ -3,75 +3,167 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Elementary.Properties.Selectors
 {
     /// <summary>
-    /// A value propery pair collection is an inpput to all factories producing operations on property pairs
-    /// like comparision assignment.
-    /// It allows to manually exclude or override mappings.
+    /// Base type of <see cref="ValuePropertyPairCollection{L, R}"/> containing all functions which
+    /// don't require the type parameters.
     /// </summary>
-    public class ValuePropertyPairCollection<L, R> : IEnumerable<IValuePropertyPair>, IValuePropertyPairCollectionConfiguration<L, R>
+    public abstract class ValuePropertyPairCollection : IEnumerable<IValuePropertyPair>
     {
         private readonly IEnumerable<IValuePropertyPair> propertyPairs;
         private readonly List<string> exclusions = new List<string>();
-        private readonly List<IValuePropertyPair> included = new List<IValuePropertyPair>();
+
+        internal List<ValuePropertyPairNested> Included { get; } = new List<ValuePropertyPairNested>();
 
         internal ValuePropertyPairCollection(IEnumerable<IValuePropertyPair> propertyPairs) => this.propertyPairs = propertyPairs;
 
-        #region IEnumerable<ValuePropertyPair>
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
         /// <returns></returns>
-        public virtual IEnumerator<IValuePropertyPair> GetEnumerator() => this.MergeResultPairs().GetEnumerator();
+        public IEnumerator<IValuePropertyPair> GetEnumerator() => this.MergeResultPairs().GetEnumerator();
 
-        virtual protected IEnumerable<IValuePropertyPair> MergeResultPairs()
+        private IEnumerable<IValuePropertyPair> MergeResultPairs()
         {
             return this.propertyPairs
                 .Where(p => !this.exclusions.Contains(p.Left.Name))
-                .Where(pp => !this.included.Any(p => p.Left.Equals(pp.Left)))
-                .Concat(this.included);
+                .Where(pp => !this.Included.Any(p => p.Left.Equals(pp.Left)))
+                .Concat(this.Included);
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+        internal void Exclude(string propertyName)
+        {
+            this.exclusions.Add(propertyName);
+        }
 
-        #endregion IEnumerable<ValuePropertyPair>
+        internal void Include(ValuePropertyPairNested valuePropertyPairNested)
+        {
+            this.Included.Add(valuePropertyPairNested);
+        }
+    }
+
+    /// <summary>
+    /// A value propery pair collection is an inpput to all factories producing operations on property pairs
+    /// like comparision assignment.
+    /// It allows to manually exclude or override mappings.
+    /// </summary>
+    public class ValuePropertyPairCollection<L, R> : ValuePropertyPairCollection, IValuePropertyPairCollectionConfiguration<L, R>
+    {
+        internal ValuePropertyPairCollection(IEnumerable<IValuePropertyPair> propertyPairs)
+            : base(propertyPairs)
+        { }
 
         #region IValuePropertyJoinConfiguration
 
         /// <summary>
-        /// Exclude property pairs from the collection based on the name of a left side property.
+        /// <inheritdoc/>
         /// </summary>
-        /// <param name="propertyNames"></param>
-        void IValuePropertyPairCollectionConfiguration.ExcludeLeft(params string[] propertyNames) => this.exclusions.AddRange(propertyNames);
-
-        /// <summary>
-        ///<inheritdoc/>
-        /// </summary>
-        /// <param name="leftPropertyName"></param>
-        /// <param name="rightPropertyName"></param>
-        void IValuePropertyPairCollectionConfiguration<L, R>.IncludePair(string leftPropertyName, string rightPropertyName)
-            => this.included.Add(new ValuePropertySymmetricPair(Property<L>.Info(leftPropertyName), Property<R>.Info(rightPropertyName)));
-
-        void IValuePropertyPairCollectionConfiguration<L, R>.IncludeNested(Expression<Func<L, object?>> propertyAccess, Action<IValuePropertyPairCollectionConfiguration<L, R>>? configure)
+        void IValuePropertyPairCollectionConfiguration<L>.ExcludeLeftValue(Expression<Func<L, object?>> propertyAccess)
         {
-            var leftProperty = Property<L>.Info(propertyAccess);
-            var rightProperty = Property<R>.Info(leftProperty.Name);
+            var propertyPath = Property<L>.InfoPath(propertyAccess).ToArray();
 
-            var configureDelegateType = typeof(Action<>).MakeGenericType(
-                typeof(IValuePropertyPairCollectionConfiguration<,>).MakeGenericType(leftProperty.PropertyType, rightProperty.PropertyType));
+            var currentReference = TraverseToNestingParent(
+                propertyPath: propertyPath[..^1],
+                includeInCurrentCollection: (r, p) => throw new InvalidOperationException($"Exclude property(name='{propertyPath[^1].Name}') failed: Nested property(name='{p.Name}') isn't included"));
 
-            // make factory method call for nested properties
-            var factoryMethod = typeof(ValuePropertyPair<,>)
-                .MakeGenericType(leftProperty.PropertyType, rightProperty.PropertyType)
-                .GetMethod("All", new[] { configureDelegateType });
-
-            var nestedProperties = (IEnumerable<IValuePropertyPair>)factoryMethod.Invoke(null, new object?[] { configure });
-
-            this.included.Add(new ValuePropertyPairNested(leftProperty, rightProperty, nestedProperties));
+            if (currentReference is null)
+                this.Exclude(propertyPath[^1].Name);
+            else
+                currentReference.NestedPairs.Exclude(propertyPath[^1].Name);
         }
+
+        private ValuePropertyPairNested? TraverseToNestingParent(IEnumerable<PropertyInfo> propertyPath, Func<ValuePropertyPairNested?, PropertyInfo, ValuePropertyPairNested> includeInCurrentCollection)
+        {
+            ValuePropertyPairNested? currentNestingParent = null;
+
+            ValuePropertyPairNested getNestedPair(PropertyInfo property)
+            {
+                if (currentNestingParent is null)
+                {
+                    return this.Included.SingleOrDefault(n => n.LeftPropertyName.Equals(property.Name));
+                }
+                else
+                {
+                    // check if property is already included
+                    return currentNestingParent.NestedPairs.Included.SingleOrDefault(n => n.LeftPropertyName.Equals(property.Name));
+                }
+            }
+
+            foreach (var property in propertyPath)
+            {
+                ValuePropertyPairNested? included = getNestedPair(property);
+
+                if (included is null)
+                {
+                    // property isn't included
+                    // => run injected strategy to handle this case.
+                    // => strategy must return new nesting parent or throw everything else breaks the loop
+                    currentNestingParent = includeInCurrentCollection(currentNestingParent, property);
+                }
+                else if (included is ValuePropertyPairNested nestingChildren)
+                {
+                    // the property is already included
+                    // => descend into collection of nested properties to include the next property in the property path
+                    currentNestingParent = nestingChildren;
+                }
+                else throw new InvalidOperationException($"Properties of type('{property.PropertyType}') can't be included");
+            }
+
+            return currentNestingParent;
+        }
+
+        void IValuePropertyPairCollectionConfiguration<L, R>.IncludeNested(Expression<Func<L, object?>> propertyAccess)
+        {
+            ValuePropertyPairNested includeInCurrentCollection(ValuePropertyPairNested? parentPair, PropertyInfo leftReferenceProperty/*, PropertyInfo rightReferenceProperty*/)
+            {
+                if (parentPair is null)
+                {
+                    // the nesting doesn't have a parent pair.
+                    // => reference property is immediatly under L
+                    var nestedPair = ValuePropertyPair.Nested(typeof(L), typeof(R), leftReferenceProperty.Name);
+                    this.Include(nestedPair);
+                    return nestedPair;
+                }
+                else
+                {
+                    var nestedPair = ValuePropertyPair.Nested(left: parentPair.LeftPropertyType, right: parentPair.RightPropertyType, leftReferenceProperty.Name);
+                    parentPair.NestedPairs.Include(nestedPair);
+                    return nestedPair;
+                }
+            }
+
+            // the left property path is leading. It is expeced thet the right side follows the same structure
+            var leftPropertyPath = Property<L>.InfoPath(propertyAccess).ToArray();
+
+            var nestingParent = TraverseToNestingParent(
+                propertyPath: leftPropertyPath[..^1],
+                includeInCurrentCollection: includeInCurrentCollection);
+
+            includeInCurrentCollection(nestingParent, leftPropertyPath[^1]);
+        }
+
+        //void IValuePropertyPairCollectionConfiguration<L, R>.IncludeNested(Expression<Func<L, object?>> propertyAccess, Action<IValuePropertyPairCollectionConfiguration<L, R>>? configure)
+        //{
+        //    var leftProperty = Property<L>.Info(propertyAccess);
+        //    var rightProperty = Property<R>.Info(leftProperty.Name);
+
+        //    var configureDelegateType = typeof(Action<>).MakeGenericType(
+        //        typeof(IValuePropertyPairCollectionConfiguration<,>).MakeGenericType(leftProperty.PropertyType, rightProperty.PropertyType));
+
+        //    // make factory method call for nested properties
+        //    var factoryMethod = typeof(ValuePropertyPair<,>)
+        //        .MakeGenericType(leftProperty.PropertyType, rightProperty.PropertyType)
+        //        .GetMethod("All", new[] { configureDelegateType });
+
+        //    var nestedProperties = (ValuePropertyPairCollection)factoryMethod.Invoke(null, new object?[] { configure });
+
+        //    this.Include(new ValuePropertyPairNested(leftProperty, rightProperty, nestedProperties));
+        //}
 
         #endregion IValuePropertyJoinConfiguration
     }

@@ -17,14 +17,9 @@ namespace Elementary.Properties.Mappers
         /// <typeparam name="D"></typeparam>
         /// <param name="configure"></param>
         /// <returns></returns>
-        public static Action<S, D> Of<S, D>(Action<IValuePropertyPairCollectionConfiguration<S, D>>? configure = null)
-        {
-            var propertyPairs = ValuePropertyPair<S,D>.Join(leftProperties: ValueProperty<S>.AllCanRead(), rightProperties: ValueProperty<D>.AllCanWrite());
-            configure?.Invoke(propertyPairs);
-            return DynamicMappingOperation<S, D>(propertyPairs);
-        }
+        public static Action<S, D> Of<S, D>(Action<IValuePropertyPairCollectionConfiguration<S, D>>? configure = null) => Of<S, D>(ValuePropertyPair<S, D>.MappableCollection(configure));
 
-        private static Action<S, D> DynamicMappingOperation<S, D>(IEnumerable<IValuePropertyPair> propertyPairs)
+        private static Action<S, D> Of<S, D>(IEnumerable<IValuePropertyPair> propertyPairs)
         {
             var mapProperty = new DynamicMethod(
                name: $"{typeof(S)}_to_{typeof(D)}",
@@ -35,25 +30,135 @@ namespace Elementary.Properties.Mappers
             mapProperty.DefineParameter(0, ParameterAttributes.In, "source");
             mapProperty.DefineParameter(1, ParameterAttributes.In, "destination");
 
-            var ilGen = mapProperty.GetILGenerator(256);
-            foreach (var pair in propertyPairs.ToArray())
-                MapPropertyPair<S, D>(ilGen, pair);
+            var builder = mapProperty.GetILGenerator(256);
 
-            ilGen.Emit(OpCodes.Ret);
+            var scope = DeclareLocal_Scope_From_Arguments<S, D>(builder);
+
+            Map_Argument_Properties(builder, scope, propertyPairs);
+
+            builder.Emit(OpCodes.Ret);
 
             return (Action<S, D>)mapProperty.CreateDelegate(typeof(Action<S, D>));
         }
 
-        private static void MapPropertyPair<S, D>(ILGenerator ilGen, IValuePropertyPair pair)
+        private static (LocalBuilder left, LocalBuilder right) DeclareLocal_Scope_From_Arguments<S, D>(ILGenerator builder)
         {
-            if (pair is ValuePropertySymmetricPair symPair)
+            var left = builder.DeclareLocal(typeof(S));
+            builder.Emit(OpCodes.Ldarg_0);
+            builder.Emit(OpCodes.Stloc, left);
+
+            var right = builder.DeclareLocal(typeof(D));
+            builder.Emit(OpCodes.Ldarg_1);
+            builder.Emit(OpCodes.Stloc, right);
+
+            return (left, right);
+        }
+
+        private static void Map_Argument_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, IEnumerable<IValuePropertyPair> propertyPairs)
+        {
+            foreach (var pair in propertyPairs.ToArray())
             {
-                ilGen.Emit(OpCodes.Ldarg_1);
-                ilGen.Emit(OpCodes.Ldarg_0);
-                ilGen.Emit(OpCodes.Callvirt, pair.Left.GetGetMethod(nonPublic: true));
-                ilGen.Emit(OpCodes.Callvirt, symPair.Right.GetSetMethod(nonPublic: true));
+                if (pair is ValuePropertyPairValue valuePair)
+                {
+                    Map_Value_Properties(builder, scope, valuePair);
+                }
+                else if (pair is ValuePropertyPairNested referenceProperties)
+                {
+                    Map_Argument_Reference_Properties(builder, scope, referenceProperties);
+                }
+                else throw new InvalidOperationException($"pairing type ({pair.GetType().Name}) is unkown. Can't generate code");
             }
-            else throw new InvalidOperationException($"pairing type ({pair.GetType().Name}) is unkown. Can't generate code");
+        }
+
+        private static void Map_Value_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, ValuePropertyPairValue valuePair)
+        {
+            // assign property values
+            builder.Emit(OpCodes.Ldloc, scope.right);
+            builder.Emit(OpCodes.Ldloc, scope.left);
+            builder.Emit(OpCodes.Callvirt, valuePair.LeftGetter());
+            builder.Emit(OpCodes.Callvirt, valuePair.RightSetter());
+        }
+
+        private static void Map_Argument_Reference_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) parentScope, ValuePropertyPairNested propertyPair)
+        {
+            var skipMapping = builder.DefineLabel();
+            var scope = DeclareLocal_Scope_From_Reference_Properties(builder, parentScope, skipMapping, propertyPair);
+
+            Map_Nested_Properties(builder, scope, propertyPair.NestedPairs);
+
+            builder.MarkLabel(skipMapping);
+        }
+
+        private static (LocalBuilder left, LocalBuilder right) DeclareLocal_Scope_From_Reference_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) parentScope, Label skipMapping, ValuePropertyPairNested pair)
+        {
+            // left.<property> == null ?
+            var leftIsNotNull = builder.DefineLabel();
+            builder.Emit(OpCodes.Ldloc, parentScope.left);
+            builder.Emit(OpCodes.Callvirt, pair.LeftGetter());
+            builder.Emit(OpCodes.Brtrue, leftIsNotNull);
+
+            // left.<property> == null: set right to null
+            builder.Emit(OpCodes.Ldloc, parentScope.right);
+            builder.Emit(OpCodes.Ldnull);
+            builder.Emit(OpCodes.Callvirt, pair.RightSetter());
+            builder.Emit(OpCodes.Br, skipMapping);
+
+            // left.<property> != null
+            builder.MarkLabel(leftIsNotNull);
+
+            // right.<property> == null ?
+            var leftAndRightArentNull = builder.DefineLabel();
+            builder.Emit(OpCodes.Ldloc, parentScope.right);
+            builder.Emit(OpCodes.Callvirt, pair.RightGetter());
+            builder.Emit(OpCodes.Brtrue, leftAndRightArentNull);
+
+            // right.<property> == null: create new instance of R
+            builder.Emit(OpCodes.Ldloc, parentScope.right);
+            builder.Emit(OpCodes.Newobj, pair.RightCtor());
+            builder.Emit(OpCodes.Callvirt, pair.RightSetter());
+
+            // left.<property> != null && right.<property> != null
+            builder.MarkLabel(leftAndRightArentNull);
+
+            // var left = <property value>
+            builder.Emit(OpCodes.Ldloc, parentScope.left);
+            builder.Emit(OpCodes.Callvirt, pair.LeftGetter());
+            var left = builder.DeclareLocal(pair.LeftPropertyType);
+            builder.Emit(OpCodes.Stloc, left);
+
+            // var right = <property value>
+            builder.Emit(OpCodes.Ldloc, parentScope.right);
+            builder.Emit(OpCodes.Callvirt, pair.RightGetter());
+            var right = builder.DeclareLocal(pair.RightPropertyType);
+            builder.Emit(OpCodes.Stloc, right);
+
+            return (left, right);
+        }
+
+        private static void Map_Nested_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, IEnumerable<IValuePropertyPair> propertyPairs)
+        {
+            foreach (var pair in propertyPairs.ToArray())
+            {
+                if (pair is ValuePropertyPairValue valuePair)
+                {
+                    Map_Value_Properties(builder, scope, valuePair);
+                }
+                else if (pair is ValuePropertyPairNested referenceProperties)
+                {
+                    Map_Nested_Reference_Properties(builder, scope, referenceProperties);
+                }
+                else throw new InvalidOperationException($"pairing type ({pair.GetType().Name}) is unkown. Can't generate code");
+            }
+        }
+
+        private static void Map_Nested_Reference_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) parentScope, ValuePropertyPairNested propertyPair)
+        {
+            var skipMapping = builder.DefineLabel();
+            var scope = DeclareLocal_Scope_From_Reference_Properties(builder, parentScope, skipMapping, propertyPair);
+
+            Map_Nested_Properties(builder, scope, propertyPair.NestedPairs);
+
+            builder.MarkLabel(skipMapping);
         }
     }
 }

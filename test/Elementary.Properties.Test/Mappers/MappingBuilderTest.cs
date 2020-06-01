@@ -6,22 +6,26 @@ namespace Elementary.Properties.Test.Mappers
 {
     public class MappingBuilderTest
     {
-        private class Source
+        public class Source
         {
-            public int IntegerPublic { get; set; }
+            public int Integer { get; set; }
 
-            public int IntegerProtected { protected get; set; }
+            public string String { get; set; }
 
-            public int IntegerPrivate { private get; set; }
+            public Source Reference { set; get; }
+
+            public int[] Collection { get; set; }
         }
 
-        private class Destination
+        public class Destination
         {
-            public int IntegerPublic { get; set; }
+            public int Integer { get; set; }
 
-            public int IntegerProtected { protected get; set; }
+            public string String { get; set; }
 
-            public int IntegerPrivate { private get; set; }
+            public Destination Reference { set; get; }
+
+            public int[] Collection { get; set; }
         }
 
         public static IEnumerable<object[]> ArrangeIncludeProperty()
@@ -29,14 +33,14 @@ namespace Elementary.Properties.Test.Mappers
             yield return new object[]
             {
                 new MappingBuilder<Source, Destination>()
-                    .Include(s => s.IntegerPublic)
+                    .Include(s => s.Integer)
                     .Build()
                     .ToArray()
             };
             yield return new object[]
             {
                 new MappingBuilder<Source, Destination>()
-                    .Include(nameof(Source.IntegerPublic))
+                    .Include(nameof(Source.Integer))
                     .Build()
                     .ToArray()
             };
@@ -49,8 +53,8 @@ namespace Elementary.Properties.Test.Mappers
             // ASSERT
 
             Assert.Single(mapping);
-            Assert.Equal(typeof(Source).GetProperty(nameof(Source.IntegerPublic)).GetGetMethod(), mapping.Single().SourceGetter);
-            Assert.Equal(typeof(Destination).GetProperty(nameof(Source.IntegerPublic)).GetSetMethod(), mapping.Single().DestinationSetter);
+            Assert.Equal(typeof(Source).GetProperty(nameof(Source.Integer)).GetGetMethod(), mapping.Single().SourceGetter);
+            Assert.Equal(typeof(Destination).GetProperty(nameof(Source.Integer)).GetSetMethod(), mapping.Single().DestinationSetter);
         }
 
         [Fact]
@@ -60,8 +64,8 @@ namespace Elementary.Properties.Test.Mappers
 
             var builder = new MappingBuilder<Source, Destination>()
                 .IncludeValueProperties()
-                .Include(s => s.IntegerPublic)
-                .Include(nameof(Source.IntegerPublic));
+                .Include(s => s.Integer)
+                .Include(nameof(Source.Integer));
 
             // ACT
 

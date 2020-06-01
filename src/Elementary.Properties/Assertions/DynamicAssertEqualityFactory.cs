@@ -20,8 +20,7 @@ namespace Elementary.Properties.Assertions
         /// <returns></returns>
         public static Func<L, R, bool> Of<L, R>(Action<IValuePropertyPairCollectionConfiguration<L, R>>? configure = null)
         {
-            var propertyPairs = ValuePropertyPair<L, R>.Join(leftProperties: ValueProperty<L>.AllCanRead(), rightProperties: ValueProperty<R>.AllCanRead());
-            configure?.Invoke(propertyPairs);
+            var propertyPairs = ValuePropertyPair<L, R>.ComparableCollection(configure);
             return AssertEqualiyOperation<L, R>(propertyPairs);
         }
 
@@ -95,7 +94,7 @@ namespace Elementary.Properties.Assertions
         {
             foreach (var pair in propertyPairs)
             {
-                if (pair is ValuePropertySymmetricPair valuePair)
+                if (pair is ValuePropertyPairValue valuePair)
                 {
                     Compare_Value_Properties(builder, scope, valuePair);
                 }
@@ -115,7 +114,7 @@ namespace Elementary.Properties.Assertions
 
             If_Scope_Is_Null_At_Both_Sides_Skip(builder, scope, gotoSkipCompare);
 
-            Compare_Properties(builder, scope, nestedPair.NestedPropertyPairs);
+            Compare_Properties(builder, scope, nestedPair.NestedPairs);
 
             builder.MarkLabel(gotoSkipCompare);
         }
@@ -159,7 +158,7 @@ namespace Elementary.Properties.Assertions
             return (left, right);
         }
 
-        private static void Compare_Value_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, ValuePropertySymmetricPair propertyPair)
+        private static void Compare_Value_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, ValuePropertyPairValue propertyPair)
         {
             var equalityComparer = EqualityComparer(propertyPair.LeftPropertyType);
 

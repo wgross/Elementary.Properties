@@ -7,7 +7,9 @@ namespace Elementary.Properties.Test.Selectors
 {
     public class ValuePropertyPairCollectionTest
     {
-        public class PropertyTypeArchetypes
+        #region Properties of same type and name
+
+        public class PropertyTypeArchetypes_Left
         {
             public int Integer { get; set; }
 
@@ -17,10 +19,232 @@ namespace Elementary.Properties.Test.Selectors
 
             public string String { get; set; }
 
-            public PropertyTypeArchetypes Reference { set; get; }
+            public PropertyTypeArchetypes_Left2 Reference { set; get; }
 
             public int[] Collection { get; set; }
         }
+
+        public class PropertyTypeArchetypes_Left2
+        {
+            public int Integer2 { get; set; }
+
+            public Guid Struct2 { get; set; }
+
+            public DateTime? Nullable2 { get; set; }
+
+            public string String2 { get; set; }
+
+            public PropertyTypeArchetypes_Left Reference2 { set; get; }
+
+            public int[] Collection2 { get; set; }
+        }
+
+        public class PropertyTypeArchetypes_Right
+        {
+            public int Integer { get; set; }
+
+            public Guid Struct { get; set; }
+
+            public DateTime? Nullable { get; set; }
+
+            public string String { get; set; }
+
+            public PropertyTypeArchetypes_Right2 Reference { set; get; }
+
+            public int[] Collection { get; set; }
+        }
+
+        public class PropertyTypeArchetypes_Right2
+        {
+            public int Integer2 { get; set; }
+
+            public Guid Struct2 { get; set; }
+
+            public DateTime? Nullable2 { get; set; }
+
+            public string String2 { get; set; }
+
+            public PropertyTypeArchetypes_Right Reference2 { set; get; }
+
+            public int[] Collection2 { get; set; }
+        }
+
+        [Fact]
+        public void ValuePropertyPairCollection_contains_matching_properties()
+        {
+            // ACT
+
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All().ToArray();
+
+            // ASSERT
+
+            Assert.Equal(new[]
+            {
+                nameof(PropertyTypeArchetypes_Left.Integer),
+                nameof(PropertyTypeArchetypes_Left.Struct),
+                nameof(PropertyTypeArchetypes_Left.Nullable),
+                nameof(PropertyTypeArchetypes_Left.String)
+            },
+            result.Select(pp => pp.Left.Name));
+        }
+
+        [Fact]
+        public void ValuePropertyPairCollection_excludes_property()
+        {
+            // ACT
+
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            {
+                c.ExcludeLeftValue(o => o.Integer);
+            }).ToArray();
+
+            // ASSERT
+
+            Assert.Equal(new[]
+            {
+                nameof(PropertyTypeArchetypes_Left.Struct),
+                nameof(PropertyTypeArchetypes_Left.Nullable),
+                nameof(PropertyTypeArchetypes_Left.String)
+            },
+            result.Select(pp => pp.Left.Name));
+        }
+
+        [Fact]
+        public void ValuePropertyPairCollection_includes_nested_properties()
+        {
+            // ACT
+
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            {
+                c.IncludeNested(l => l.Reference);
+            }).ToArray();
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.Left.Name));
+
+            var result_level1 = result
+                .OfType<ValuePropertyPairNested>()
+                .Single(p => p.Left.Name == nameof(PropertyTypeArchetypes_Left.Reference))
+                .NestedPairs;
+
+            Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2" }, result_level1.Select(pi => pi.Left.Name));
+        }
+
+        [Fact]
+        public void ValuePropertyPairCollection_excludes_nested_properties()
+        {
+            // ACT
+
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            {
+                c.IncludeNested(l => l.Reference);
+                c.ExcludeLeftValue(l => l.Reference.Integer2);
+            }).ToArray();
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.Left.Name));
+
+            var result_level1 = result
+                .OfType<ValuePropertyPairNested>()
+                .Single(p => p.Left.Name == nameof(PropertyTypeArchetypes_Left.Reference))
+                .NestedPairs;
+
+            Assert.Equal(new[] { "Struct2", "Nullable2", "String2" }, result_level1.Select(pi => pi.Left.Name));
+        }
+
+        [Fact]
+        public void ValuePropertyPairCollection_excluding_nested_property_rejects_unknown_nested()
+        {
+            // ACT
+
+            var result = Assert.Throws<InvalidOperationException>(() => ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+              {
+                  //missing//c.IncludeNested(l => l.Reference);
+                  c.ExcludeLeftValue(l => l.Reference.Integer2);
+              }));
+
+            // ASSERT
+
+            Assert.Equal($"Exclude property(name='Integer2') failed: Nested property(name='Reference') isn't included", result.Message);
+        }
+
+        [Fact]
+        public void ValuePropertyPairCollection_includes_nested2_properties()
+        {
+            // ACT
+
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            {
+                c.IncludeNested(l => l.Reference);
+                c.IncludeNested(l => l.Reference.Reference2);
+            }).ToArray();
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.Left.Name));
+
+            var result_level1 = result
+                .OfType<ValuePropertyPairNested>()
+                .Single(p => p.Left.Name == nameof(PropertyTypeArchetypes_Left.Reference))
+                .NestedPairs;
+
+            Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2", "Reference2" }, result_level1.Select(pi => pi.Left.Name));
+
+            var result_level2 = result_level1
+                 .OfType<ValuePropertyPairNested>()
+                 .Single(p => p.Left.Name == nameof(PropertyTypeArchetypes_Left2.Reference2))
+                 .NestedPairs;
+
+            Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String" }, result_level2.Select(pi => pi.Left.Name));
+        }
+
+        #endregion Properties of same type and name
+
+        #region Handling of different names
+
+        public class PropertyTypeArchetypes_Right_DifferentName
+        {
+            public int Integer { get; set; }
+
+            public Guid Struct_Different { get; set; }
+
+            public DateTime? Nullable { get; set; }
+
+            public string String { get; set; }
+
+            public PropertyTypeArchetypes_Left Reference_Different { set; get; }
+
+            public int[] Collection { get; set; }
+        }
+
+        [Fact]
+        public void ValuePropertyPairCollection_including_nested_properties_fails_for_missing_right_side()
+        {
+            // ACT & ASSERT
+
+            var result = Assert.Throws<InvalidOperationException>(() => ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right_DifferentName>.All(configure: c =>
+            {
+                c.IncludeNested(l => l.Reference);
+            }).ToArray());
+
+            Assert.Equal($"Property(name='Reference') wasn't found in type(name='PropertyTypeArchetypes_Right_DifferentName')", result.Message);
+        }
+
+        [Fact]
+        public void ValuePropertyPairCollection_ignores_missing_property_name()
+        {
+            // ACT
+
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right_DifferentName>.All().ToArray();
+
+            // ASSERT
+
+            Assert.Equal(new[]
+            {
+                nameof(PropertyTypeArchetypes_Left.Integer),
+                nameof(PropertyTypeArchetypes_Left.Nullable),
+                nameof(PropertyTypeArchetypes_Left.String)
+            },
+            result.Select(pp => pp.Left.Name));
+        }
+
+        #endregion Handling of different names
 
         public class PropertyTypeArchetypes_DifferentTypes
         {
@@ -47,82 +271,9 @@ namespace Elementary.Properties.Test.Selectors
 
             public string String { get; set; }
 
-            public PropertyTypeArchetypes Reference { set; get; }
+            public PropertyTypeArchetypes_Left Reference { set; get; }
 
             public int[] Collection { get; set; }
-        }
-
-        [Fact]
-        public void ValueProperties_joining_excludes_properties()
-        {
-            // ACT
-
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes>.Join(
-                ValueProperty<PropertyTypeArchetypes>.All(),
-                ValueProperty<PropertyTypeArchetypes>.All(),
-            configure: cfg => cfg.ExcludeLeft(nameof(PropertyTypeArchetypes.Integer), nameof(PropertyTypeArchetypes.Nullable))).ToArray();
-
-            // ASSERT
-
-            Assert.Equal(2, result.Length);
-            Assert.Equal(new[]
-                {
-                    Property<PropertyTypeArchetypes>.Info(p => p.Struct),
-                    Property<PropertyTypeArchetypes>.Info(p => p.String)
-                },
-                result.Select(pp => pp.Left).ToArray());
-        }
-
-        public class DifferentNames
-        {
-            public int AlsoInteger { get; set; }
-
-            public Guid Struct { get; set; }
-
-            public DateTime? Nullable { get; set; }
-
-            public string String { get; set; }
-
-            public PropertyTypeArchetypes Reference { set; get; }
-
-            public int[] Collection { get; set; }
-        }
-
-        //[Fact]
-        //public void ValueProperties_joining_overrides_property_pair()
-        //{
-        //    // ACT
-
-        //    var result = ValuePropertyPair<PropertyTypeArchetypes, DifferentNames>.Join(
-        //        ValueProperty<PropertyTypeArchetypes>.All(),
-        //        ValueProperty<DifferentNames>.All(),
-        //        configure: cfg => cfg.(
-        //            ValueProperty<PropertyTypeArchetypes>.Info(p => p.Integer),
-        //            ValueProperty<DifferentNames>.Info(p => p.AlsoInteger)))
-        //        .ToArray();
-
-        //    // ASSERT
-
-        //    Assert.Equal(4, result.Length);
-        //}
-
-        [Fact]
-        public void ValuePropertyPairCollection_contains_matching_properties()
-        {
-            // ACT
-
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes>.All().ToArray();
-
-            // ASSERT
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.Integer),
-                nameof(PropertyTypeArchetypes.Struct),
-                nameof(PropertyTypeArchetypes.Nullable),
-                nameof(PropertyTypeArchetypes.String)
-            },
-            result.Select(pp => pp.Left.Name));
         }
 
         [Fact]
@@ -130,161 +281,15 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes_DifferentTypes>.All().ToArray();
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_DifferentTypes>.All().ToArray();
 
             // ASSERT
 
             Assert.Equal(new[]
             {
-                nameof(PropertyTypeArchetypes.String)
+                nameof(PropertyTypeArchetypes_Left.String)
             },
             result.Select(pp => pp.Left.Name));
-        }
-
-        [Fact]
-        public void ValuePropertyPairCollection_ignores_missing_property_name()
-        {
-            // ACT
-
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes_MissingProperty>.All().ToArray();
-
-            // ASSERT
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.Integer),
-                nameof(PropertyTypeArchetypes.Nullable),
-                nameof(PropertyTypeArchetypes.String)
-            },
-            result.Select(pp => pp.Left.Name));
-        }
-
-        [Fact]
-        public void ValuePropertyPairCollection_excludes_property()
-        {
-            // ACT
-
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes>.All(configure: c =>
-             {
-                 c.ExcludeLeft(nameof(PropertyTypeArchetypes.Integer));
-             }).ToArray();
-
-            // ASSERT
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.Struct),
-                nameof(PropertyTypeArchetypes.Nullable),
-                nameof(PropertyTypeArchetypes.String)
-            },
-            result.Select(pp => pp.Left.Name));
-        }
-
-        [Fact]
-        public void ValuePropertyPairCollection_includes_property_with_different_names()
-        {
-            // ACT
-
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes_MissingProperty>.All(
-                configure: c => c.IncludePair(
-                     nameof(PropertyTypeArchetypes.Struct),
-                     nameof(PropertyTypeArchetypes_MissingProperty.Struct_Different))).ToArray();
-
-            // ASSERT
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.Integer),
-                nameof(PropertyTypeArchetypes.Nullable),
-                nameof(PropertyTypeArchetypes.String),
-                nameof(PropertyTypeArchetypes.Struct),
-            },
-            result.Select(pp => pp.Left.Name));
-        }
-
-        [Fact]
-        public void ValuePropertyPairCollection_includes_property_with_different_types()
-        {
-            // ACT
-
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes_DifferentTypes>.All(
-                configure: c => c.IncludePair(
-                     nameof(PropertyTypeArchetypes.Struct),
-                     nameof(PropertyTypeArchetypes_DifferentTypes.Struct))).ToArray();
-
-            // ASSERT
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.String),
-                nameof(PropertyTypeArchetypes.Struct),
-            },
-            result.Select(pp => pp.Left.Name));
-        }
-
-        [Fact]
-        public void ValuePropertyPairCollection_includes_matching_properties_of_nested_class()
-        {
-            // ACT
-
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes>.All(
-                configure: c => c.IncludeNested(n => n.Reference)).ToArray();
-
-            // ASSERT
-
-            var referenceProperty = result.OfType<ValuePropertyPairNested>().Single(p => p.Left.Name == nameof(PropertyTypeArchetypes.Reference));
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.Integer),
-                nameof(PropertyTypeArchetypes.Struct),
-                nameof(PropertyTypeArchetypes.Nullable),
-                nameof(PropertyTypeArchetypes.String),
-                nameof(PropertyTypeArchetypes.Reference)
-            },
-            result.Select(pp => pp.Left.Name));
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.Integer),
-                nameof(PropertyTypeArchetypes.Struct),
-                nameof(PropertyTypeArchetypes.Nullable),
-                nameof(PropertyTypeArchetypes.String)
-            },
-            referenceProperty.NestedPropertyPairs.Select(pp => pp.Left.Name));
-        }
-
-        [Fact]
-        public void ValuePropertyPairCollection_excludes_property_of_nested_class()
-        {
-            // ACT
-
-            var result = ValuePropertyPair<PropertyTypeArchetypes, PropertyTypeArchetypes>.All(
-                configure: c => c.IncludeNested(
-                    propertyAccess: n => n.Reference,
-                    configure: c => c.ExcludeLeft(nameof(PropertyTypeArchetypes.Integer)))).ToArray();
-
-            // ASSERT
-
-            var referenceProperty = result.OfType<ValuePropertyPairNested>().Single(p => p.Left.Name == nameof(PropertyTypeArchetypes.Reference));
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.Integer),
-                nameof(PropertyTypeArchetypes.Struct),
-                nameof(PropertyTypeArchetypes.Nullable),
-                nameof(PropertyTypeArchetypes.String),
-                nameof(PropertyTypeArchetypes.Reference)
-            },
-            result.Select(pp => pp.Left.Name));
-
-            Assert.Equal(new[]
-            {
-                nameof(PropertyTypeArchetypes.Struct),
-                nameof(PropertyTypeArchetypes.Nullable),
-                nameof(PropertyTypeArchetypes.String)
-            },
-            referenceProperty.NestedPropertyPairs.Select(pp => pp.Left.Name));
         }
     }
 }
