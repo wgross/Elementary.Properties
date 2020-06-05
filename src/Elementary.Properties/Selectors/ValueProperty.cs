@@ -44,14 +44,6 @@ namespace Elementary.Properties.Selectors
         }
 
         /// <summary>
-        /// Retrieves all value (or string) type properties of <typeparamref name="T"/>.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfig<T>>? configure = null)
-            => All(configure, IsValueType);
-
-        /// <summary>
         /// Retrieves all value (or string) type properties of <typeparamref name="T"/> which have public or non-public getter.
         /// </summary>
         /// <param name="configure"></param>
@@ -97,6 +89,5 @@ namespace Elementary.Properties.Selectors
 
     internal sealed class ValueProperty
     {
-        
     }
 }
