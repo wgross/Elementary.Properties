@@ -11,9 +11,9 @@ namespace Elementary.Properties.Selectors
     /// <summary>
     /// Represents a value property property in a <see cref="ValuePropertyCollection{T}"/>
     /// </summary>
-    public sealed class ValuePropertyCollectionValue : IValuePropertyCollectionItem
+    public sealed class ValuePropertyScalar : IValuePropertyCollectionItem
     {
-        internal ValuePropertyCollectionValue(PropertyInfo property)
+        internal ValuePropertyScalar(PropertyInfo property)
         {
             this.Info = property;
         }
@@ -37,6 +37,8 @@ namespace Elementary.Properties.Selectors
         /// <inheritdoc/>
         /// </summary>
         public MethodInfo Getter() => this.Info.GetGetMethod(nonPublic: true);
+
+        public MethodInfo Setter() => this.Info.GetSetMethod(nonPublic: true);
     }
 
     /// <summary>
@@ -74,6 +76,10 @@ namespace Elementary.Properties.Selectors
         /// <inheritdoc/>
         /// </summary>
         public MethodInfo Getter() => this.Info.GetGetMethod(nonPublic: true);
+
+        internal MethodInfo Setter() => this.Info.GetSetMethod(nonPublic: true);
+
+        internal ConstructorInfo Ctor() => this.PropertyType.GetConstructor(new Type[0]) ?? throw new InvalidOperationException($"Nested type(name='{this.PropertyType.Name}') must have a default constructor");
     }
 
     /// <summary>
@@ -89,7 +95,7 @@ namespace Elementary.Properties.Selectors
 
         internal ValuePropertyCollection(IEnumerable<PropertyInfo> properties)
         {
-            this.leafProperties = properties.Select(pi => (IValuePropertyCollectionItem)new ValuePropertyCollectionValue(pi)).ToArray();
+            this.leafProperties = properties.Select(pi => (IValuePropertyCollectionItem)new ValuePropertyScalar(pi)).ToArray();
         }
 
         public ValuePropertyCollection(IEnumerable<PropertyInfo> properties, Func<PropertyInfo, bool>[] predicates) : this(properties)

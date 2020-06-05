@@ -13,6 +13,8 @@ namespace Elementary.Properties.Selectors
     /// <typeparam name="L"></typeparam>
     /// <typeparam name="R"></typeparam>
     public class ValuePropertyPair<L, R>
+        where L : class
+        where R : class
     {
         /// <summary>
         /// Returns all <see cref="IValuePropertyPair"/> having matching types and names. All properties qualify if they are readable

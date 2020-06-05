@@ -13,6 +13,7 @@ namespace Elementary.Properties.Setters
     public class ReflectionSetterFactory
     {
         public static Action<T, V> Of<T, V>(Expression<Func<T, object?>> propertyAccessExpression)
+            where T : class
         {
             var propertyInfo = ValueProperty<T>.Info(propertyAccessExpression);
             var setter = propertyInfo.GetSetMethod(true) ?? throw new InvalidOperationException($"property(name='{propertyInfo.Name}') hasn't a setter");

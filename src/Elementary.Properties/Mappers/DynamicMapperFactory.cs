@@ -17,7 +17,10 @@ namespace Elementary.Properties.Mappers
         /// <typeparam name="D"></typeparam>
         /// <param name="configure"></param>
         /// <returns></returns>
-        public static Action<S, D> Of<S, D>(Action<IValuePropertyPairCollectionConfiguration<S, D>>? configure = null) => Of<S, D>(ValuePropertyPair<S, D>.MappableCollection(configure));
+        public static Action<S, D> Of<S, D>(Action<IValuePropertyPairCollectionConfiguration<S, D>>? configure = null)
+            where S : class
+            where D : class
+            => Of<S, D>(ValuePropertyPair<S, D>.MappableCollection(configure));
 
         private static Action<S, D> Of<S, D>(IEnumerable<IValuePropertyPair> propertyPairs)
         {
@@ -60,7 +63,7 @@ namespace Elementary.Properties.Mappers
             {
                 if (pair is ValuePropertyPairValue valuePair)
                 {
-                    Map_Value_Properties(builder, scope, valuePair);
+                    Map_Value_Property(builder, scope, valuePair);
                 }
                 else if (pair is ValuePropertyPairNested referenceProperties)
                 {
@@ -70,7 +73,7 @@ namespace Elementary.Properties.Mappers
             }
         }
 
-        private static void Map_Value_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, ValuePropertyPairValue valuePair)
+        private static void Map_Value_Property(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, ValuePropertyPairValue valuePair)
         {
             if (valuePair.LeftPropertyType.Equals(valuePair.RightPropertyType))
             {
@@ -153,7 +156,7 @@ namespace Elementary.Properties.Mappers
             {
                 if (pair is ValuePropertyPairValue valuePair)
                 {
-                    Map_Value_Properties(builder, scope, valuePair);
+                    Map_Value_Property(builder, scope, valuePair);
                 }
                 else if (pair is ValuePropertyPairNested referenceProperties)
                 {

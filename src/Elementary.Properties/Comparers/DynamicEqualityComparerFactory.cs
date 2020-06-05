@@ -50,7 +50,7 @@ namespace Elementary.Properties.Comparers
         {
             foreach (var p in properties)
             {
-                if (p is ValuePropertyCollectionValue valueProperty)
+                if (p is ValuePropertyScalar valueProperty)
                 {
                     Compare_Value_Property(builder, scope, valueProperty);
                 }
@@ -73,7 +73,7 @@ namespace Elementary.Properties.Comparers
             builder.MarkLabel(gotoSkipCompare);
         }
 
-        private static void Compare_Value_Property(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, ValuePropertyCollectionValue valueProperty)
+        private static void Compare_Value_Property(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, ValuePropertyScalar valueProperty)
         {
             // get property values
             builder.Emit(OpCodes.Ldloc, scope.left);
@@ -233,7 +233,7 @@ namespace Elementary.Properties.Comparers
         {
             foreach (var p in properties)
             {
-                if (p is ValuePropertyCollectionValue valueProperty)
+                if (p is ValuePropertyScalar valueProperty)
                 {
                     Hash_Value_Property(builder, addHashCode, hashCode, scope, valueProperty.Info);
                 }
