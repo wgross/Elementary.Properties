@@ -156,7 +156,7 @@ namespace Elementary.Properties.Selectors
             {
                 var newNestedProperties = new ValuePropertyCollectionReference(
                     referenceProperty: property,
-                    nestedProperties: ValueProperty.All(property.PropertyType, this.predicates));
+                    nestedProperties: NewNestedCollection(property.PropertyType));
 
                 if (currentReference is null)
                     this.Include(newNestedProperties);
@@ -204,6 +204,17 @@ namespace Elementary.Properties.Selectors
             }
 
             return currentNestingParent;
+        }
+
+        private ValuePropertyCollection NewNestedCollection(Type type)
+        {
+            var configureDelegateType = typeof(Action<>).MakeGenericType(typeof(IValuePropertyCollectionConfig<>).MakeGenericType(type));
+
+            var factoryMethod = typeof(ValueProperty<>)
+                .MakeGenericType(type)
+                .GetMethod("All", new[] { configureDelegateType, typeof(Func<PropertyInfo, bool>[]) });
+
+            return (ValuePropertyCollection)factoryMethod.Invoke(null, new object?[] { null, this.predicates });
         }
 
         #endregion IValuePropertyCollectionConfig<T>

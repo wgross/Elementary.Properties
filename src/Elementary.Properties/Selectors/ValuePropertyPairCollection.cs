@@ -54,9 +54,13 @@ namespace Elementary.Properties.Selectors
     /// </summary>
     public class ValuePropertyPairCollection<L, R> : ValuePropertyPairCollection, IValuePropertyPairCollectionConfiguration<L, R>
     {
-        internal ValuePropertyPairCollection(IEnumerable<IValuePropertyPair> propertyPairs)
+        private readonly Func<Type, Type, ValuePropertyPairCollection> createPropertyPairCollection;
+
+        internal ValuePropertyPairCollection(Func<Type, Type, ValuePropertyPairCollection> createPropertyPairCollection, IEnumerable<IValuePropertyPair> propertyPairs)
             : base(propertyPairs)
-        { }
+        {
+            this.createPropertyPairCollection = createPropertyPairCollection;
+        }
 
         #region IValuePropertyJoinConfiguration
 
@@ -125,13 +129,13 @@ namespace Elementary.Properties.Selectors
                 {
                     // the nesting doesn't have a parent pair.
                     // => reference property is immediatly under L
-                    var nestedPair = ValuePropertyPair.Nested(typeof(L), typeof(R), leftReferenceProperty.Name);
+                    var nestedPair = this.NewNestedPair(typeof(L), typeof(R), leftReferenceProperty.Name);
                     this.Include(nestedPair);
                     return nestedPair;
                 }
                 else
                 {
-                    var nestedPair = ValuePropertyPair.Nested(left: parentPair.LeftPropertyType, right: parentPair.RightPropertyType, leftReferenceProperty.Name);
+                    var nestedPair = this.NewNestedPair(left: parentPair.LeftPropertyType, right: parentPair.RightPropertyType, leftReferenceProperty.Name);
                     parentPair.NestedPairs.Include(nestedPair);
                     return nestedPair;
                 }
@@ -147,48 +151,14 @@ namespace Elementary.Properties.Selectors
             includeInCurrentCollection(nestingParent, leftPropertyPath[^1]);
         }
 
-        //void IValuePropertyPairCollectionConfiguration<L, R>.IncludeNested(Expression<Func<L, object?>> propertyAccess, Action<IValuePropertyPairCollectionConfiguration<L, R>>? configure)
-        //{
-        //    var leftProperty = Property<L>.Info(propertyAccess);
-        //    var rightProperty = Property<R>.Info(leftProperty.Name);
-
-        //    var configureDelegateType = typeof(Action<>).MakeGenericType(
-        //        typeof(IValuePropertyPairCollectionConfiguration<,>).MakeGenericType(leftProperty.PropertyType, rightProperty.PropertyType));
-
-        //    // make factory method call for nested properties
-        //    var factoryMethod = typeof(ValuePropertyPair<,>)
-        //        .MakeGenericType(leftProperty.PropertyType, rightProperty.PropertyType)
-        //        .GetMethod("All", new[] { configureDelegateType });
-
-        //    var nestedProperties = (ValuePropertyPairCollection)factoryMethod.Invoke(null, new object?[] { configure });
-
-        //    this.Include(new ValuePropertyPairNested(leftProperty, rightProperty, nestedProperties));
-        //}
-
         #endregion IValuePropertyJoinConfiguration
+
+        private ValuePropertyPairNested NewNestedPair(Type left, Type right, string name)
+        {
+            var leftReference = Property.Info(left, name);
+            var rightReference = Property.Info(right, name);
+
+            return new ValuePropertyPairNested(leftReference, rightReference, this.createPropertyPairCollection(leftReference.PropertyType, rightReference.PropertyType));
+        }
     }
-
-    /// <summary>
-    ///
-    /// </summary>
-    /// <typeparam name="L"></typeparam>
-    /// <typeparam name="R"></typeparam>
-    //public sealed class ValuePropertyPairCollection<L, R> : ValuePropertyPairCollection, IValuePropertyPairCollectionConfiguration<L, R>
-    //{
-    //    private readonly List<ValuePropertyPairWithCustomRightSetter<R>> overridesDestSetter = new List<ValuePropertyPairWithCustomRightSetter<R>>();
-
-    //    internal ValuePropertyPairCollection(IEnumerable<IValuePropertyPair> propertyPairs) : base(propertyPairs)
-    //    {
-    //    }
-
-    //    void IValuePropertyPairCollectionConfiguration<L, R>.OverridePairWithDestinationSetter(PropertyInfo rightProperty, Action<R, object> setter)
-    //    {
-    //        this.overridesDestSetter.Add(new ValuePropertyPairWithCustomRightSetter<R>(rightProperty, setter));
-    //    }
-
-    //    protected override IEnumerable<IValuePropertyPair> MergeResultPairs()
-    //    {
-    //        return base.MergeResultPairs().Concat(this.overridesDestSetter);
-    //    }
-    //}
 }

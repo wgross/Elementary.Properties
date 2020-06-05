@@ -74,7 +74,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All().ToArray();
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.MappableCollection().ToArray();
 
             // ASSERT
 
@@ -93,7 +93,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.MappableCollection(configure: c =>
             {
                 c.ExcludeLeftValue(o => o.Integer);
             }).ToArray();
@@ -114,7 +114,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.MappableCollection(configure: c =>
             {
                 c.IncludeNested(l => l.Reference);
             }).ToArray();
@@ -134,7 +134,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.MappableCollection(configure: c =>
             {
                 c.IncludeNested(l => l.Reference);
                 c.ExcludeLeftValue(l => l.Reference.Integer2);
@@ -155,7 +155,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = Assert.Throws<InvalidOperationException>(() => ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            var result = Assert.Throws<InvalidOperationException>(() => ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.MappableCollection(configure: c =>
               {
                   //missing//c.IncludeNested(l => l.Reference);
                   c.ExcludeLeftValue(l => l.Reference.Integer2);
@@ -171,7 +171,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.All(configure: c =>
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right>.MappableCollection(configure: c =>
             {
                 c.IncludeNested(l => l.Reference);
                 c.IncludeNested(l => l.Reference.Reference2);
@@ -218,7 +218,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT & ASSERT
 
-            var result = Assert.Throws<InvalidOperationException>(() => ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right_DifferentName>.All(configure: c =>
+            var result = Assert.Throws<InvalidOperationException>(() => ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right_DifferentName>.MappableCollection(configure: c =>
             {
                 c.IncludeNested(l => l.Reference);
             }).ToArray());
@@ -231,7 +231,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right_DifferentName>.All().ToArray();
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Right_DifferentName>.MappableCollection().ToArray();
 
             // ASSERT
 
@@ -281,10 +281,58 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_DifferentTypes>.All().ToArray();
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_DifferentTypes>.MappableCollection().ToArray();
 
             // ASSERT
 
+            Assert.Equal(new[]
+            {
+                nameof(PropertyTypeArchetypes_Left.String)
+            },
+            result.Select(pp => pp.Left.Name));
+        }
+
+        public class PropertyTypeArchetypes_Nullable
+        {
+            public int? Integer { get; set; }
+
+            public Guid? Struct { get; set; }
+
+            public string String { get; set; }
+
+            public PropertyTypeArchetypes_Left Reference { set; get; }
+
+            public int[] Collection { get; set; }
+        }
+
+        [Fact]
+        public void MappableValuePropertyPairCollection_contains_matching_right_nullable_properties()
+        {
+            // ACT
+
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Left, PropertyTypeArchetypes_Nullable>.MappableCollection().ToArray();
+
+            // ASSERT
+
+            Assert.Equal(new[]
+            {
+                nameof(PropertyTypeArchetypes_Left.Integer),
+                nameof(PropertyTypeArchetypes_Left.Struct),
+                nameof(PropertyTypeArchetypes_Left.String)
+            },
+            result.Select(pp => pp.Left.Name));
+        }
+
+        [Fact]
+        public void MappableValuePropertyPairCollection_rejects_matching_left_nullable_properties()
+        {
+            // ACT
+
+            var result = ValuePropertyPair<PropertyTypeArchetypes_Nullable, PropertyTypeArchetypes_Left>.MappableCollection().ToArray();
+
+            // ASSERT
+
+            Nullable<int> x;
             Assert.Equal(new[]
             {
                 nameof(PropertyTypeArchetypes_Left.String)

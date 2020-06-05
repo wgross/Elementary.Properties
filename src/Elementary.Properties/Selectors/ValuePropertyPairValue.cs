@@ -22,6 +22,20 @@ namespace Elementary.Properties.Selectors
 
         internal PropertyInfo Right { get; }
 
+        internal Type RightPropertyType => this.Right.PropertyType;
+
+        internal bool RightPropertyIsNullable
+        {
+            get
+            {
+                if (this.RightPropertyType.IsGenericType)
+                    if (this.RightPropertyType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+                        if (Nullable.GetUnderlyingType(this.RightPropertyType).Equals(this.LeftPropertyType))
+                            return true;
+                return false;
+            }
+        }
+
         internal MethodInfo RightGetter() => this.Right.GetGetMethod(nonPublic: true);
 
         internal MethodInfo RightSetter() => this.Right.GetSetMethod(nonPublic: true);

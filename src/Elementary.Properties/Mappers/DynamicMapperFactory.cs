@@ -72,11 +72,23 @@ namespace Elementary.Properties.Mappers
 
         private static void Map_Value_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) scope, ValuePropertyPairValue valuePair)
         {
-            // assign property values
-            builder.Emit(OpCodes.Ldloc, scope.right);
-            builder.Emit(OpCodes.Ldloc, scope.left);
-            builder.Emit(OpCodes.Callvirt, valuePair.LeftGetter());
-            builder.Emit(OpCodes.Callvirt, valuePair.RightSetter());
+            if (valuePair.LeftPropertyType.Equals(valuePair.RightPropertyType))
+            {
+                // assign property values
+                builder.Emit(OpCodes.Ldloc, scope.right);
+                builder.Emit(OpCodes.Ldloc, scope.left);
+                builder.Emit(OpCodes.Callvirt, valuePair.LeftGetter());
+                builder.Emit(OpCodes.Callvirt, valuePair.RightSetter());
+            }
+            else if (valuePair.RightPropertyIsNullable)
+            {
+                // assign nullable of left type to the ride side
+                builder.Emit(OpCodes.Ldloc, scope.right);
+                builder.Emit(OpCodes.Ldloc, scope.left);
+                builder.Emit(OpCodes.Callvirt, valuePair.LeftGetter());
+                builder.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(valuePair.LeftPropertyType).GetConstructor(new[] { valuePair.LeftPropertyType }));
+                builder.Emit(OpCodes.Callvirt, valuePair.RightSetter());
+            }
         }
 
         private static void Map_Argument_Reference_Properties(ILGenerator builder, (LocalBuilder left, LocalBuilder right) parentScope, ValuePropertyPairNested propertyPair)

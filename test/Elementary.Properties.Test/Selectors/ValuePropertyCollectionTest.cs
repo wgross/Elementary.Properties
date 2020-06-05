@@ -42,7 +42,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperty<PropertyTypeArchetypes>.All(c => c.ExcludeValue(p => p.Integer));
+            var result = ValueProperty<PropertyTypeArchetypes>.AllCanReadAndWrite(c => c.ExcludeValue(p => p.Integer));
 
             // ASSERT
 
@@ -54,7 +54,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperty<PropertyTypeArchetypes>.All(c =>
+            var result = ValueProperty<PropertyTypeArchetypes>.AllCanReadAndWrite(c =>
             {
                 c.IncludeNested(p => p.Reference);
             });
@@ -77,7 +77,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperty<PropertyTypeArchetypes>.All(c =>
+            var result = ValueProperty<PropertyTypeArchetypes>.AllCanReadAndWrite(c =>
             {
                 c.IncludeNested(p => p.Reference);
                 c.ExcludeValue(p => p.Reference.Integer2);
@@ -101,7 +101,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = Assert.Throws<InvalidOperationException>(() => ValueProperty<PropertyTypeArchetypes>.All(c =>
+            var result = Assert.Throws<InvalidOperationException>(() => ValueProperty<PropertyTypeArchetypes>.AllCanReadAndWrite(c =>
              {
                  //missing//c.IncludeNested(p => p.Reference);
                  c.ExcludeValue(p => p.Reference.Integer2);
@@ -117,7 +117,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperty<PropertyTypeArchetypes>.All(c =>
+            var result = ValueProperty<PropertyTypeArchetypes>.AllCanReadAndWrite(c =>
             {
                 c.IncludeNested(p => p.Reference);
                 c.IncludeNested(p => p.Reference.Reference2);
@@ -147,7 +147,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperty<PropertyTypeArchetypes>.All(c =>
+            var result = ValueProperty<PropertyTypeArchetypes>.AllCanReadAndWrite(c =>
             {
                 c.IncludeNested(p => p.Reference);
                 c.IncludeNested(p => p.Reference.Reference2);

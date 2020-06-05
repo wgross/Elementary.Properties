@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Elementary.Properties.Selectors
 {
@@ -14,26 +15,17 @@ namespace Elementary.Properties.Selectors
     public class ValuePropertyPair<L, R>
     {
         /// <summary>
-        /// Returns all <see cref="IValuePropertyPair"/> having matching types and names.
-        /// </summary>
-        /// <returns></returns>
-        public static IEnumerable<IValuePropertyPair> All(Action<IValuePropertyPairCollectionConfiguration<L, R>>? configure = null)
-        {
-            var collection = new ValuePropertyPairCollection<L, R>(InnerJoin(ValueProperty<L>.All(), ValueProperty<R>.All()));
-            configure?.Invoke(collection);
-            return collection;
-        }
-
-        /// <summary>
         /// Returns all <see cref="IValuePropertyPair"/> having matching types and names. All properties qualify if they are readable
         /// </summary>
         /// <returns></returns>
         public static IEnumerable<IValuePropertyPair> ComparableCollection(Action<IValuePropertyPairCollectionConfiguration<L, R>>? configure = null)
         {
-            var collection = new ValuePropertyPairCollection<L, R>(InnerJoin(ValueProperty<L>.AllCanRead(), ValueProperty<R>.AllCanRead()));
+            var collection = new ValuePropertyPairCollection<L, R>(ComparableCollection, InnerJoin(ValueProperty<L>.AllCanRead(), ValueProperty<R>.AllCanRead()));
             configure?.Invoke(collection);
             return collection;
         }
+
+        private static ValuePropertyPairCollection ComparableCollection(Type left, Type right) => Collection(left, right);
 
         /// <summary>
         /// Returns all <see cref="IValuePropertyPair"/> having matching types and names.
@@ -41,45 +33,48 @@ namespace Elementary.Properties.Selectors
         /// <returns></returns>
         public static IEnumerable<IValuePropertyPair> MappableCollection(Action<IValuePropertyPairCollectionConfiguration<L, R>>? configure = null)
         {
-            var collection = new ValuePropertyPairCollection<L, R>(InnerJoin(ValueProperty<L>.AllCanRead(), ValueProperty<R>.AllCanWrite()));
+            var collection = new ValuePropertyPairCollection<L, R>(MappableCollection, InnerJoin(ValueProperty<L>.AllCanRead(), ValueProperty<R>.AllCanWrite()));
             configure?.Invoke(collection);
             return collection;
         }
 
-        private static IEnumerable<IValuePropertyPair> InnerJoin(IEnumerable<IValuePropertyCollectionItem> left, IEnumerable<IValuePropertyCollectionItem> right)
-        {
-            return left.Join(
-                inner: right,
-                outerKeySelector: l => (l.PropertyName, l.PropertyType),
-                innerKeySelector: r => (r.PropertyName, r.PropertyType),
-                resultSelector: (r, l) => Value(l.Info, r.Info));
-        }
+        private static ValuePropertyPairCollection MappableCollection(Type left, Type right) => Collection(left, right);
 
-        private static ValuePropertyPairValue Value(PropertyInfo left, PropertyInfo right) => new ValuePropertyPairValue(left, right);
-    }
-
-    internal class ValuePropertyPair
-    {
-        internal static ValuePropertyPairCollection MappableCollection(Type left, Type right)
+        private static ValuePropertyPairCollection Collection(Type left, Type right, [CallerMemberName] string factoryMethodName = null)
         {
             var configureDelegateType = typeof(Action<>).MakeGenericType(typeof(IValuePropertyPairCollectionConfiguration<,>).MakeGenericType(left, right));
-            var factoryMethod = typeof(ValuePropertyPair<,>).MakeGenericType(left, right).GetMethod("MappableCollection", new[] { configureDelegateType });
+            var factoryMethod = typeof(ValuePropertyPair<,>).MakeGenericType(left, right).GetMethod(factoryMethodName, new[] { configureDelegateType });
             return (ValuePropertyPairCollection)factoryMethod.Invoke(null, new object?[] { null });
         }
 
-        /// <summary>
-        /// Creates new <see cref="ValuePropertyPairNested"/>. A property of name <paramref name="name"/> must exist on both sides
-        /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        internal static ValuePropertyPairNested Nested(Type left, Type right, string name)
+        private static IEnumerable<IValuePropertyPair> InnerJoin(IEnumerable<IValuePropertyCollectionItem> left, IEnumerable<IValuePropertyCollectionItem> right)
         {
-            var leftReference = Property.Info(left, name);
-            var rightReference = Property.Info(right, name);
+            var propertiesOfSameName = left.Join(
+                inner: right,
+                outerKeySelector: l => l.PropertyName,
+                innerKeySelector: r => r.PropertyName,
+                resultSelector: (l, r) => (left: l.Info, right: r.Info));
 
-            return new ValuePropertyPairNested(leftReference, rightReference, MappableCollection(leftReference.PropertyType, rightReference.PropertyType));
+            foreach (var pair in propertiesOfSameName)
+                if (TypesAreMappable(pair.left.PropertyType, pair.right.PropertyType))
+                    yield return Value(pair.left, pair.right);
         }
+
+        private static bool TypesAreMappable(Type leftType, Type rightType)
+        {
+            // accept identical type
+            if (leftType == rightType)
+                return true;
+
+            // accept Nullable<leftType> at right side
+            if (rightType.IsGenericType)
+                if (rightType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+                    if (Nullable.GetUnderlyingType(rightType).Equals(leftType))
+                        return true;
+
+            return false;
+        }
+
+        private static ValuePropertyPairValue Value(PropertyInfo left, PropertyInfo right) => new ValuePropertyPairValue(left, right);
     }
 }

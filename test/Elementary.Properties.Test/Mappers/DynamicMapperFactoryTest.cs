@@ -494,5 +494,50 @@ namespace Elementary.Properties.Test.Mappers
         //    Assert.Equal(2, destination.IntegerProtected);
         //    Assert.Equal(3, destination.IntegerPrivate);
         //}
+
+        #region Handle Nullable properties
+
+        public class Destination_Nullable
+        {
+            public int? Integer { get; set; }
+
+            public string String { get; set; }
+
+            public Destination2 Reference { set; get; }
+
+            public int[] Collection { get; set; }
+        }
+
+        private readonly Func<Source, Destination_Nullable, bool> assertEqualsNullable = DynamicAssertEqualityFactory.Of<Source, Destination_Nullable>();
+
+        [Fact]
+        public void Map_properties_of_same_name_and_nullable_type()
+        {
+            // ARRANGE
+
+            var source = new Source
+            {
+                Integer = 1,
+                String = "2"
+            };
+            var destination = new Destination_Nullable();
+            var mapper = DynamicMapperFactory.Of<Source, Destination_Nullable>();
+
+            // ACT
+
+            mapper(source, destination);
+
+            // ASSERT
+
+            Assert.True(assertEqualsNullable(source, destination));
+
+            Assert.Equal(1, source.Integer);
+            Assert.Equal("2", source.String);
+
+            Assert.Equal(1, destination.Integer);
+            Assert.Equal("2", destination.String);
+        }
+
+        #endregion Handle Nullable properties
     }
 }

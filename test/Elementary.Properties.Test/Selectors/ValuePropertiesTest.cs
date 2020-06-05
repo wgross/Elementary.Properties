@@ -29,7 +29,7 @@ namespace Elementary.Properties.Test.Selectors
         {
             // ACT
 
-            var result = ValueProperty<PropertyTypeArchetypes>.All();
+            var result = ValueProperty<PropertyTypeArchetypes>.AllCanReadAndWrite();
 
             // ASSERT
 

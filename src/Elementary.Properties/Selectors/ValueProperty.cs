@@ -51,18 +51,10 @@ namespace Elementary.Properties.Selectors
         public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfig<T>>? configure = null)
             => All(configure, IsValueType);
 
-        public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfig<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
-        {
-            var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates);
-            configure?.Invoke(collection);
-            return collection;
-        }
-
         /// <summary>
         /// Retrieves all value (or string) type properties of <typeparamref name="T"/> which have public or non-public getter.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="configure">edit the property list before is will be returned</param>
+        /// <param name="configure"></param>
         /// <returns></returns>
         public static IEnumerable<IValuePropertyCollectionItem> AllCanRead(Action<IValuePropertyCollectionConfig<T>>? configure = null)
             => All(configure, IsValueType, CanRead);
@@ -85,6 +77,13 @@ namespace Elementary.Properties.Selectors
         public static IEnumerable<IValuePropertyCollectionItem> AllCanReadAndWrite(Action<IValuePropertyCollectionConfig<T>>? configure = null)
             => All(configure, IsValueType, CanRead, CanWrite);
 
+        public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfig<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
+        {
+            var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates);
+            configure?.Invoke(collection);
+            return collection;
+        }
+
         #region Query properties from a Type
 
         private static bool IsValueType(PropertyInfo pi) => pi.PropertyType.IsValueType || typeof(string).Equals(pi.PropertyType);
@@ -98,15 +97,6 @@ namespace Elementary.Properties.Selectors
 
     internal sealed class ValueProperty
     {
-        internal static ValuePropertyCollection All(Type type, params Func<PropertyInfo, bool>[] predicates)
-        {
-            var configureDelegateType = typeof(Action<>).MakeGenericType(typeof(IValuePropertyCollectionConfig<>).MakeGenericType(type));
-
-            var factoryMethod = typeof(ValueProperty<>)
-                .MakeGenericType(type)
-                .GetMethod("All", new[] { configureDelegateType, typeof(Func<PropertyInfo, bool>[]) });
-
-            return (ValuePropertyCollection)factoryMethod.Invoke(null, new object?[] { null, predicates });
-        }
+        
     }
 }
