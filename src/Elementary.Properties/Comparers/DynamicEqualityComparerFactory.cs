@@ -16,7 +16,7 @@ namespace Elementary.Properties.Comparers
         /// <typeparam name="T"></typeparam>
         /// <param name="configure"></param>
         /// <returns></returns>
-        public static IEqualityComparer<T> Of<T>(Action<IValuePropertyCollectionConfig<T>>? configure = null) where T : class
+        public static IEqualityComparer<T> Of<T>(Action<IValuePropertyCollectionConfiguration<T>>? configure = null) where T : class
         {
             var properties = ValueProperty<T>.AllCanRead(configure);
 
@@ -54,14 +54,14 @@ namespace Elementary.Properties.Comparers
                 {
                     Compare_Value_Property(builder, scope, valueProperty);
                 }
-                else if (p is ValuePropertyCollectionReference referenceProperty)
+                else if (p is ValuePropertyNested referenceProperty)
                 {
                     Compare_Reference_Property(builder, scope, referenceProperty);
                 }
             };
         }
 
-        private static void Compare_Reference_Property(ILGenerator builder, (LocalBuilder left, LocalBuilder right) parentScope, ValuePropertyCollectionReference referenceProperty)
+        private static void Compare_Reference_Property(ILGenerator builder, (LocalBuilder left, LocalBuilder right) parentScope, ValuePropertyNested referenceProperty)
         {
             var scope = DeclareLocal_Scope_From_Properties(builder, parentScope, referenceProperty.Info);
             var gotoSkipCompare = builder.DefineLabel();
@@ -237,7 +237,7 @@ namespace Elementary.Properties.Comparers
                 {
                     Hash_Value_Property(builder, addHashCode, hashCode, scope, valueProperty.Info);
                 }
-                else if (p is ValuePropertyCollectionReference referenceProperty)
+                else if (p is ValuePropertyNested referenceProperty)
                 {
                     Hash_Reference_Property(builder, addHashCode, hashCode, scope, referenceProperty);
                 }
@@ -260,7 +260,7 @@ namespace Elementary.Properties.Comparers
             return local;
         }
 
-        private static void Hash_Reference_Property(ILGenerator builder, MethodInfo addHashCode, LocalBuilder hashCode, LocalBuilder parentScope, ValuePropertyCollectionReference property)
+        private static void Hash_Reference_Property(ILGenerator builder, MethodInfo addHashCode, LocalBuilder hashCode, LocalBuilder parentScope, ValuePropertyNested property)
         {
             var scope = DeclareLocal_Scope_From_Property(builder, parentScope, property.Info);
             var gotoSkipHash = builder.DefineLabel();

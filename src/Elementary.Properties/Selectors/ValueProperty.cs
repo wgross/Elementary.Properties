@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Elementary.Properties.Selectors
 {
@@ -48,8 +49,8 @@ namespace Elementary.Properties.Selectors
         /// </summary>
         /// <param name="configure"></param>
         /// <returns></returns>
-        public static IEnumerable<IValuePropertyCollectionItem> AllCanRead(Action<IValuePropertyCollectionConfig<T>>? configure = null)
-            => All(configure, IsValueType, CanRead);
+        public static IEnumerable<IValuePropertyCollectionItem> AllCanRead(Action<IValuePropertyCollectionConfiguration<T>>? configure = null)
+            => All(AllCanRead, configure, IsValueType, CanRead);
 
         /// <summary>
         /// Retrieves all value (or string) type properties of <typeparamref name="T"/> which have public or non-public setter.
@@ -57,8 +58,8 @@ namespace Elementary.Properties.Selectors
         /// <typeparam name="T"></typeparam>
         /// <param name="configure">edit the property list before is will be returned</param>
         /// <returns></returns>
-        public static IEnumerable<IValuePropertyCollectionItem> AllCanWrite(Action<IValuePropertyCollectionConfig<T>>? configure = null)
-            => All(configure, IsValueType, CanWrite);
+        public static IEnumerable<IValuePropertyCollectionItem> AllCanWrite(Action<IValuePropertyCollectionConfiguration<T>>? configure = null)
+            => All(AllCanWrite, configure, IsValueType, CanWrite);
 
         /// <summary>
         /// Retrieves all value (or string) type properties of <typeparamref name="T"/> which have bothe getter and setter (public or non-public).
@@ -66,15 +67,39 @@ namespace Elementary.Properties.Selectors
         /// <typeparam name="T"></typeparam>
         /// <param name="configure">edit the property list before is will be returned</param>
         /// <returns></returns>
-        public static IEnumerable<IValuePropertyCollectionItem> AllCanReadAndWrite(Action<IValuePropertyCollectionConfig<T>>? configure = null)
-            => All(configure, IsValueType, CanRead, CanWrite);
+        public static IEnumerable<IValuePropertyCollectionItem> AllCanReadAndWrite(Action<IValuePropertyCollectionConfiguration<T>>? configure = null)
+            => All(AllCanReadAndWrite, configure, IsValueType, CanRead, CanWrite);
 
-        public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfig<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
+        public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfiguration<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
         {
-            var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates);
+            var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates, null);
             configure?.Invoke(collection);
             return collection;
         }
+
+        public static IEnumerable<IValuePropertyCollectionItem> All(Func<Type, ValuePropertyCollection> createNestedCollection, Action<IValuePropertyCollectionConfiguration<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
+        {
+            var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates, createNestedCollection);
+            configure?.Invoke(collection);
+            return collection;
+        }
+
+        #region Handle internal nesting callbacks
+
+        private static ValuePropertyCollection AllCanRead(Type type) => Collection(type);
+
+        private static ValuePropertyCollection AllCanWrite(Type type) => Collection(type);
+
+        private static ValuePropertyCollection AllCanReadAndWrite(Type type) => Collection(type);
+
+        private static ValuePropertyCollection Collection(Type type, [CallerMemberName] string? factoryMethodName = null)
+        {
+            var configureDelegateType = typeof(Action<>).MakeGenericType(typeof(IValuePropertyCollectionConfiguration<>).MakeGenericType(type));
+            var factoryMethod = typeof(ValueProperty<>).MakeGenericType(type).GetMethod(factoryMethodName, new[] { configureDelegateType });
+            return (ValuePropertyCollection)factoryMethod.Invoke(null, new object?[] { null });
+        }
+
+        #endregion Handle internal nesting callbacks
 
         #region Query properties from a Type
 
@@ -85,9 +110,5 @@ namespace Elementary.Properties.Selectors
         private static bool CanWrite(PropertyInfo pi) => pi.CanWrite;
 
         #endregion Query properties from a Type
-    }
-
-    internal sealed class ValueProperty
-    {
     }
 }

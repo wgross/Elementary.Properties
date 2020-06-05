@@ -13,7 +13,7 @@ namespace Elementary.Properties.Selectors
         {
             this.Left = leftReference;
             this.Right = rightReference;
-            this.NestedPairs = nestedPropertyPairs;
+            this.NestedPropertyPairs = nestedPropertyPairs;
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace Elementary.Properties.Selectors
         /// <summary>
         /// All properties pairs nested unter the left and right reference properties
         /// </summary>
-        public ValuePropertyPairCollection NestedPairs { get; }
+        public ValuePropertyPairCollection NestedPropertyPairs { get; }
 
         internal MethodInfo LeftGetter() => this.Left.GetGetMethod(nonPublic: true);
 

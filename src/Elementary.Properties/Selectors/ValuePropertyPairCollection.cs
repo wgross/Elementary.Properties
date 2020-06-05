@@ -78,7 +78,7 @@ namespace Elementary.Properties.Selectors
             if (currentReference is null)
                 this.Exclude(propertyPath[^1].Name);
             else
-                currentReference.NestedPairs.Exclude(propertyPath[^1].Name);
+                currentReference.NestedPropertyPairs.Exclude(propertyPath[^1].Name);
         }
 
         private ValuePropertyPairNested? TraverseToNestingParent(IEnumerable<PropertyInfo> propertyPath, Func<ValuePropertyPairNested?, PropertyInfo, ValuePropertyPairNested> includeInCurrentCollection)
@@ -94,7 +94,7 @@ namespace Elementary.Properties.Selectors
                 else
                 {
                     // check if property is already included
-                    return currentNestingParent.NestedPairs.Included.SingleOrDefault(n => n.LeftPropertyName.Equals(property.Name));
+                    return currentNestingParent.NestedPropertyPairs.Included.SingleOrDefault(n => n.LeftPropertyName.Equals(property.Name));
                 }
             }
 
@@ -127,33 +127,28 @@ namespace Elementary.Properties.Selectors
             {
                 if (parentPair is null)
                 {
-                    // the nesting doesn't have a parent pair.
-                    // => reference property is immediatly under L
-                    var nestedPair = this.NewNestedPair(typeof(L), typeof(R), leftReferenceProperty.Name);
+                    var nestedPair = this.NewValuePropertyPairNested(typeof(L), typeof(R), leftReferenceProperty.Name);
                     this.Include(nestedPair);
                     return nestedPair;
                 }
                 else
                 {
-                    var nestedPair = this.NewNestedPair(left: parentPair.LeftPropertyType, right: parentPair.RightPropertyType, leftReferenceProperty.Name);
-                    parentPair.NestedPairs.Include(nestedPair);
+                    var nestedPair = this.NewValuePropertyPairNested(left: parentPair.LeftPropertyType, right: parentPair.RightPropertyType, leftReferenceProperty.Name);
+                    parentPair.NestedPropertyPairs.Include(nestedPair);
                     return nestedPair;
                 }
             }
 
             // the left property path is leading. It is expeced thet the right side follows the same structure
             var leftPropertyPath = Property<L>.InfoPath(propertyAccess).ToArray();
-
-            var nestingParent = TraverseToNestingParent(
-                propertyPath: leftPropertyPath[..^1],
-                includeInCurrentCollection: includeInCurrentCollection);
+            var nestingParent = TraverseToNestingParent(propertyPath: leftPropertyPath[..^1], includeInCurrentCollection: includeInCurrentCollection);
 
             includeInCurrentCollection(nestingParent, leftPropertyPath[^1]);
         }
 
         #endregion IValuePropertyJoinConfiguration
 
-        private ValuePropertyPairNested NewNestedPair(Type left, Type right, string name)
+        private ValuePropertyPairNested NewValuePropertyPairNested(Type left, Type right, string name)
         {
             var leftReference = Property.Info(left, name);
             var rightReference = Property.Info(right, name);

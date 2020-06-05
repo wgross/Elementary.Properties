@@ -25,8 +25,6 @@ namespace Elementary.Properties.Selectors
             return collection;
         }
 
-        private static ValuePropertyPairCollection ComparableCollection(Type left, Type right) => Collection(left, right);
-
         /// <summary>
         /// Returns all <see cref="IValuePropertyPair"/> having matching types and names.
         /// </summary>
@@ -38,6 +36,10 @@ namespace Elementary.Properties.Selectors
             return collection;
         }
 
+        #region Handle internal nesting callbacks
+
+        private static ValuePropertyPairCollection ComparableCollection(Type left, Type right) => Collection(left, right);
+
         private static ValuePropertyPairCollection MappableCollection(Type left, Type right) => Collection(left, right);
 
         private static ValuePropertyPairCollection Collection(Type left, Type right, [CallerMemberName] string factoryMethodName = null)
@@ -46,6 +48,8 @@ namespace Elementary.Properties.Selectors
             var factoryMethod = typeof(ValuePropertyPair<,>).MakeGenericType(left, right).GetMethod(factoryMethodName, new[] { configureDelegateType });
             return (ValuePropertyPairCollection)factoryMethod.Invoke(null, new object?[] { null });
         }
+
+        #endregion Handle internal nesting callbacks
 
         private static IEnumerable<IValuePropertyPair> InnerJoin(IEnumerable<IValuePropertyCollectionItem> left, IEnumerable<IValuePropertyCollectionItem> right)
         {

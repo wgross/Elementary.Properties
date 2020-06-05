@@ -96,7 +96,7 @@ namespace Elementary.Properties.Mappers
             var skipMapping = builder.DefineLabel();
             var scope = DeclareLocal_Scope_From_Reference_Properties(builder, parentScope, skipMapping, propertyPair);
 
-            Map_Nested_Properties(builder, scope, propertyPair.NestedPairs);
+            Map_Nested_Properties(builder, scope, propertyPair.NestedPropertyPairs);
 
             builder.MarkLabel(skipMapping);
         }
@@ -168,7 +168,7 @@ namespace Elementary.Properties.Mappers
             var skipMapping = builder.DefineLabel();
             var scope = DeclareLocal_Scope_From_Reference_Properties(builder, parentScope, skipMapping, propertyPair);
 
-            Map_Nested_Properties(builder, scope, propertyPair.NestedPairs);
+            Map_Nested_Properties(builder, scope, propertyPair.NestedPropertyPairs);
 
             builder.MarkLabel(skipMapping);
         }

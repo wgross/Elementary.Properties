@@ -7,7 +7,7 @@ namespace Elementary.Properties.Selectors
     /// Defines methods to modify a prefilled collection of value properties befire code generation.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public interface IValuePropertyCollectionConfig<T>
+    public interface IValuePropertyCollectionConfiguration<T>
     {
         /// <summary>
         /// Excludes a property from the collection using a member access expression.

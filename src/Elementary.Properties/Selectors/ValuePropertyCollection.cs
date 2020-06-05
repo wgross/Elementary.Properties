@@ -42,9 +42,9 @@ namespace Elementary.Properties.Selectors
     /// <summary>
     /// Refresents a reference property in a <see cref="ValuePropertyCollection{T}"/>
     /// </summary>
-    public sealed class ValuePropertyCollectionReference : IValuePropertyCollectionItem
+    public sealed class ValuePropertyNested : IValuePropertyCollectionItem
     {
-        internal ValuePropertyCollectionReference(PropertyInfo referenceProperty, ValuePropertyCollection nestedProperties)
+        internal ValuePropertyNested(PropertyInfo referenceProperty, ValuePropertyCollection nestedProperties)
         {
             this.Info = referenceProperty;
             this.NestedProperties = nestedProperties;
@@ -83,12 +83,18 @@ namespace Elementary.Properties.Selectors
     {
         private readonly IEnumerable<IValuePropertyCollectionItem> leafProperties;
         private readonly List<string> excludedLeaves = new List<string>();
+        private Func<PropertyInfo, bool>[] predicates;
 
-        internal List<ValuePropertyCollectionReference> Included { get; } = new List<ValuePropertyCollectionReference>();
+        internal List<ValuePropertyNested> Included { get; } = new List<ValuePropertyNested>();
 
         internal ValuePropertyCollection(IEnumerable<PropertyInfo> properties)
         {
             this.leafProperties = properties.Select(pi => (IValuePropertyCollectionItem)new ValuePropertyCollectionValue(pi)).ToArray();
+        }
+
+        public ValuePropertyCollection(IEnumerable<PropertyInfo> properties, Func<PropertyInfo, bool>[] predicates) : this(properties)
+        {
+            this.predicates = predicates;
         }
 
         #region IEnumerable<IValuePropertyCollectionItem>
@@ -118,25 +124,27 @@ namespace Elementary.Properties.Selectors
             else throw new ArgumentException($"Property '{propertyName}' doesn't exist in collection.", nameof(propertyName));
         }
 
-        internal void Include(ValuePropertyCollectionReference nestedPropeties) => this.Included.Add(nestedPropeties);
+        internal void Include(ValuePropertyNested nestedPropeties) => this.Included.Add(nestedPropeties);
     }
 
     /// <summary>
     /// An editable collection of properties to build unary operation for
     /// </summary>
-    public class ValuePropertyCollection<T> : ValuePropertyCollection, IValuePropertyCollectionConfig<T>
+    public class ValuePropertyCollection<T> : ValuePropertyCollection, IValuePropertyCollectionConfiguration<T>
     {
         private readonly Func<PropertyInfo, bool>[] predicates;
+        private readonly Func<Type, ValuePropertyCollection> createPropertyCollection;
 
-        internal ValuePropertyCollection(IEnumerable<PropertyInfo> properties, IEnumerable<Func<PropertyInfo, bool>> predicates)
+        internal ValuePropertyCollection(IEnumerable<PropertyInfo> properties, IEnumerable<Func<PropertyInfo, bool>> predicates, Func<Type, ValuePropertyCollection> createPropertyCollection = null)
             : base(properties)
         {
             this.predicates = predicates.ToArray();
+            this.createPropertyCollection = createPropertyCollection;
         }
 
         #region IValuePropertyCollectionConfig<T>
 
-        void IValuePropertyCollectionConfig<T>.ExcludeValue(Expression<Func<T, object?>> propertyAccess)
+        void IValuePropertyCollectionConfiguration<T>.ExcludeValue(Expression<Func<T, object?>> propertyAccess)
         {
             var propertyPath = Property<T>.InfoPath(propertyAccess).ToArray();
 
@@ -147,45 +155,53 @@ namespace Elementary.Properties.Selectors
             if (currentReference is null)
                 this.Exclude(propertyPath[^1].Name);
             else
-                currentReference.Exclude(propertyPath[^1].Name);
+                currentReference.NestedProperties.Exclude(propertyPath[^1].Name);
         }
 
-        void IValuePropertyCollectionConfig<T>.IncludeNested(Expression<Func<T, object?>> propertyAccess)
+        void IValuePropertyCollectionConfiguration<T>.IncludeNested(Expression<Func<T, object?>> propertyAccess)
         {
-            ValuePropertyCollection includeInCurrentCollection(ValuePropertyCollection? currentReference, PropertyInfo property)
+            ValuePropertyNested includeInCurrentCollection(ValuePropertyNested? parent, PropertyInfo referenceProperty)
             {
-                var newNestedProperties = new ValuePropertyCollectionReference(
-                    referenceProperty: property,
-                    nestedProperties: NewNestedCollection(property.PropertyType));
-
-                if (currentReference is null)
-                    this.Include(newNestedProperties);
+                if (parent is null)
+                {
+                    var nested = this.NewValuePropertyNested(typeof(T), referenceProperty.Name);
+                    this.Include(nested);
+                    return nested;
+                }
                 else
-                    currentReference.Include(newNestedProperties);
-
-                return newNestedProperties.NestedProperties;
+                {
+                    var nested = this.NewValuePropertyNested(type: parent.PropertyType, referenceProperty.Name);
+                    parent.NestedProperties.Include(nested);
+                    return nested;
+                }
             }
 
             var propertyPath = Property<T>.InfoPath(propertyAccess).ToArray();
-
-            var nestingParent = TraverseToNestingParent(
-                propertyPath: propertyPath[..^1],
-                includeInCurrentCollection: includeInCurrentCollection);
+            var nestingParent = TraverseToNestingParent(propertyPath: propertyPath[..^1], includeInCurrentCollection: includeInCurrentCollection);
 
             includeInCurrentCollection(nestingParent, propertyPath[^1]);
         }
 
-        private ValuePropertyCollection? TraverseToNestingParent(IEnumerable<PropertyInfo> propertyPath, Func<ValuePropertyCollection?, PropertyInfo, ValuePropertyCollection> includeInCurrentCollection)
+        private ValuePropertyNested? TraverseToNestingParent(IEnumerable<PropertyInfo> propertyPath, Func<ValuePropertyNested?, PropertyInfo, ValuePropertyNested> includeInCurrentCollection)
         {
-            ValuePropertyCollection currentNestingParent = this;
+            ValuePropertyNested? currentNestingParent = null;
+
+            ValuePropertyNested getNested(PropertyInfo property)
+            {
+                if (currentNestingParent is null)
+                {
+                    return this.Included.SingleOrDefault(n => n.PropertyName.Equals(property.Name));
+                }
+                else
+                {
+                    // check if property is already included
+                    return currentNestingParent.NestedProperties.Included.SingleOrDefault(n => n.PropertyName.Equals(property.Name));
+                }
+            }
 
             foreach (var property in propertyPath)
             {
-                // check if property is already included
-                var included = currentNestingParent
-                    .Included
-                    .SingleOrDefault(n => n.PropertyName.Equals(property.Name))
-                    ?.NestedProperties;
+                ValuePropertyNested? included = getNested(property);
 
                 if (included is null)
                 {
@@ -194,7 +210,7 @@ namespace Elementary.Properties.Selectors
                     // => strategy must return new nesting parent or throw everything else breaks the loop
                     currentNestingParent = includeInCurrentCollection(currentNestingParent, property);
                 }
-                else if (included is ValuePropertyCollection nestingChildren)
+                else if (included is ValuePropertyNested nestingChildren)
                 {
                     // the property is already included
                     // => descend into collection of nested properties to include the next property in the property path
@@ -206,15 +222,11 @@ namespace Elementary.Properties.Selectors
             return currentNestingParent;
         }
 
-        private ValuePropertyCollection NewNestedCollection(Type type)
+        private ValuePropertyNested NewValuePropertyNested(Type type, string propertyName)
         {
-            var configureDelegateType = typeof(Action<>).MakeGenericType(typeof(IValuePropertyCollectionConfig<>).MakeGenericType(type));
+            var referenceProperty = Property.Info(type, propertyName);
 
-            var factoryMethod = typeof(ValueProperty<>)
-                .MakeGenericType(type)
-                .GetMethod("All", new[] { configureDelegateType, typeof(Func<PropertyInfo, bool>[]) });
-
-            return (ValuePropertyCollection)factoryMethod.Invoke(null, new object?[] { null, this.predicates });
+            return new ValuePropertyNested(referenceProperty, this.createPropertyCollection(referenceProperty.PropertyType));
         }
 
         #endregion IValuePropertyCollectionConfig<T>

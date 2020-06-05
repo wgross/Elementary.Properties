@@ -114,7 +114,7 @@ namespace Elementary.Properties.Assertions
 
             If_Scope_Is_Null_At_Both_Sides_Skip(builder, scope, gotoSkipCompare);
 
-            Compare_Properties(builder, scope, nestedPair.NestedPairs);
+            Compare_Properties(builder, scope, nestedPair.NestedPropertyPairs);
 
             builder.MarkLabel(gotoSkipCompare);
         }

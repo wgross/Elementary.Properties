@@ -19,7 +19,7 @@ namespace Elementary.Properties.Assertions
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static Func<T, bool> Of<T>(Action<IValuePropertyCollectionConfig<T>>? configure = null)
+        public static Func<T, bool> Of<T>(Action<IValuePropertyCollectionConfiguration<T>>? configure = null)
         {
             return AssertIntializedOperation<T>(ValueProperty<T>.AllCanRead(configure));
         }
@@ -51,7 +51,7 @@ namespace Elementary.Properties.Assertions
                 {
                     If_Property_Is_Default_Return_False(builder, valueProperty);
                 }
-                else if (p is ValuePropertyCollectionReference referenceProperty)
+                else if (p is ValuePropertyNested referenceProperty)
                 {
                     Assert_Initialized_Of_Properties(builder, Scope_To_Property_Value(builder, referenceProperty), referenceProperty.NestedProperties);
                 }
@@ -66,7 +66,7 @@ namespace Elementary.Properties.Assertions
             return scope;
         }
 
-        private static LocalBuilder Scope_To_Property_Value(ILGenerator builder, ValuePropertyCollectionReference property)
+        private static LocalBuilder Scope_To_Property_Value(ILGenerator builder, ValuePropertyNested property)
         {
             var scope = builder.DeclareLocal(property.PropertyType);
             builder.Emit(OpCodes.Callvirt, property.Getter());

@@ -64,7 +64,7 @@ namespace Elementary.Properties.Test.Selectors
             Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName));
 
             var result_level1 = result
-                .OfType<ValuePropertyCollectionReference>()
+                .OfType<ValuePropertyNested>()
                 .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes.Reference))
                 .NestedProperties
                 .Select(pi => pi.PropertyName).ToArray();
@@ -88,7 +88,7 @@ namespace Elementary.Properties.Test.Selectors
             Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName));
 
             var result_level1 = result
-                .OfType<ValuePropertyCollectionReference>()
+                .OfType<ValuePropertyNested>()
                 .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes.Reference))
                 .NestedProperties
                 .Select(pi => pi.PropertyName).ToArray();
@@ -128,14 +128,14 @@ namespace Elementary.Properties.Test.Selectors
             Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName).ToArray());
 
             var result_level1 = result
-                .OfType<ValuePropertyCollectionReference>()
+                .OfType<ValuePropertyNested>()
                 .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes.Reference))
                 .NestedProperties;
 
             Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2", "Reference2" }, result_level1.Select(pi => pi.PropertyName));
 
             var result_level2 = result_level1
-                .OfType<ValuePropertyCollectionReference>()
+                .OfType<ValuePropertyNested>()
                 .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes2.Reference2))
                 .NestedProperties;
 
@@ -159,14 +159,14 @@ namespace Elementary.Properties.Test.Selectors
             Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String", "Reference" }, result.Select(pi => pi.PropertyName).ToArray());
 
             var result_level1 = result
-                .OfType<ValuePropertyCollectionReference>()
+                .OfType<ValuePropertyNested>()
                 .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes.Reference))
                 .NestedProperties;
 
             Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2", "Reference2" }, result_level1.Select(pi => pi.PropertyName));
 
             var result_level2 = result_level1
-                .OfType<ValuePropertyCollectionReference>()
+                .OfType<ValuePropertyNested>()
                 .Single(p => p.PropertyName == nameof(PropertyTypeArchetypes2.Reference2))
                 .NestedProperties;
 
@@ -215,7 +215,7 @@ namespace Elementary.Properties.Test.Selectors
 
             // ASSERT
 
-            var referenceProperty = (ValuePropertyCollectionReference)(result.Single(p => p.PropertyName == "Reference"));
+            var referenceProperty = (ValuePropertyNested)(result.Single(p => p.PropertyName == "Reference"));
 
             Assert.Equal(new[] { "Public", "Protected", "Private", "MissingSetter" }, referenceProperty.NestedProperties.Select(pi => pi.PropertyName).ToArray());
         }

@@ -103,9 +103,7 @@ namespace Elementary.Properties.Selectors
         /// </summary>
         /// <param name="filters"></param>
         /// <returns></returns>
-        public static IEnumerable<PropertyInfo> Infos(params Func<PropertyInfo, bool>[] filters) => filters.Aggregate(
-            seed: typeof(T).GetProperties(Property.CommonBindingFlags).AsEnumerable(),
-            func: (accumulate, filter) => accumulate.Where(filter));
+        public static IEnumerable<PropertyInfo> Infos(params Func<PropertyInfo, bool>[] filters) => Property.Infos(typeof(T), filters);
     }
 
     internal class Property
@@ -113,5 +111,8 @@ namespace Elementary.Properties.Selectors
         internal const BindingFlags CommonBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         internal static PropertyInfo Info(Type type, string name) => type.GetProperty(name, CommonBindingFlags) ?? throw new InvalidOperationException($"Property(name='{name}') wasn't found in type(name='{type.Name}')");
+
+        internal static IEnumerable<PropertyInfo> Infos(Type type, params Func<PropertyInfo, bool>[] filters)
+            => filters.Aggregate(seed: type.GetProperties(CommonBindingFlags).AsEnumerable(), func: (accumulate, filter) => accumulate.Where(filter));
     }
 }

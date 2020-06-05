@@ -124,7 +124,7 @@ namespace Elementary.Properties.Test.Selectors
             var result_level1 = result
                 .OfType<ValuePropertyPairNested>()
                 .Single(p => p.Left.Name == nameof(PropertyTypeArchetypes_Left.Reference))
-                .NestedPairs;
+                .NestedPropertyPairs;
 
             Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2" }, result_level1.Select(pi => pi.Left.Name));
         }
@@ -145,7 +145,7 @@ namespace Elementary.Properties.Test.Selectors
             var result_level1 = result
                 .OfType<ValuePropertyPairNested>()
                 .Single(p => p.Left.Name == nameof(PropertyTypeArchetypes_Left.Reference))
-                .NestedPairs;
+                .NestedPropertyPairs;
 
             Assert.Equal(new[] { "Struct2", "Nullable2", "String2" }, result_level1.Select(pi => pi.Left.Name));
         }
@@ -182,14 +182,14 @@ namespace Elementary.Properties.Test.Selectors
             var result_level1 = result
                 .OfType<ValuePropertyPairNested>()
                 .Single(p => p.Left.Name == nameof(PropertyTypeArchetypes_Left.Reference))
-                .NestedPairs;
+                .NestedPropertyPairs;
 
             Assert.Equal(new[] { "Integer2", "Struct2", "Nullable2", "String2", "Reference2" }, result_level1.Select(pi => pi.Left.Name));
 
             var result_level2 = result_level1
                  .OfType<ValuePropertyPairNested>()
                  .Single(p => p.Left.Name == nameof(PropertyTypeArchetypes_Left2.Reference2))
-                 .NestedPairs;
+                 .NestedPropertyPairs;
 
             Assert.Equal(new[] { "Integer", "Struct", "Nullable", "String" }, result_level2.Select(pi => pi.Left.Name));
         }
