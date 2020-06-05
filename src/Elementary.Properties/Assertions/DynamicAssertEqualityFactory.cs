@@ -19,6 +19,8 @@ namespace Elementary.Properties.Assertions
         /// <param name="configure"></param>
         /// <returns></returns>
         public static Func<L, R, bool> Of<L, R>(Action<IValuePropertyPairCollectionConfiguration<L, R>>? configure = null)
+            where L : class
+            where R : class
         {
             var propertyPairs = ValuePropertyPair<L, R>.ComparableCollection(configure);
             return AssertEqualiyOperation<L, R>(propertyPairs);

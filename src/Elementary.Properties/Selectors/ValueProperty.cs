@@ -17,7 +17,7 @@ namespace Elementary.Properties.Selectors
     /// Retruevs several sets of properties from type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public sealed class ValueProperty<T>
+    public sealed class ValueProperty<T> where T : class
     {
         private const BindingFlags defaultBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
@@ -70,14 +70,7 @@ namespace Elementary.Properties.Selectors
         public static IEnumerable<IValuePropertyCollectionItem> AllCanReadAndWrite(Action<IValuePropertyCollectionConfiguration<T>>? configure = null)
             => All(AllCanReadAndWrite, configure, IsValueType, CanRead, CanWrite);
 
-        public static IEnumerable<IValuePropertyCollectionItem> All(Action<IValuePropertyCollectionConfiguration<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
-        {
-            var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates, null);
-            configure?.Invoke(collection);
-            return collection;
-        }
-
-        public static IEnumerable<IValuePropertyCollectionItem> All(Func<Type, ValuePropertyCollection> createNestedCollection, Action<IValuePropertyCollectionConfiguration<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
+        private static IEnumerable<IValuePropertyCollectionItem> All(Func<Type, ValuePropertyCollection> createNestedCollection, Action<IValuePropertyCollectionConfiguration<T>>? configure, params Func<PropertyInfo, bool>[] predicates)
         {
             var collection = new ValuePropertyCollection<T>(Property<T>.Infos(predicates), predicates, createNestedCollection);
             configure?.Invoke(collection);

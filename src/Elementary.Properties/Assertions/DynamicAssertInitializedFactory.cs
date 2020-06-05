@@ -19,7 +19,7 @@ namespace Elementary.Properties.Assertions
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static Func<T, bool> Of<T>(Action<IValuePropertyCollectionConfiguration<T>>? configure = null)
+        public static Func<T, bool> Of<T>(Action<IValuePropertyCollectionConfiguration<T>>? configure = null) where T : class
         {
             return AssertIntializedOperation<T>(ValueProperty<T>.AllCanRead(configure));
         }
@@ -47,7 +47,7 @@ namespace Elementary.Properties.Assertions
             {
                 Use_Scope_if_Not_Null(builder, scope);
 
-                if (p is ValuePropertyCollectionValue valueProperty)
+                if (p is ValuePropertyScalar valueProperty)
                 {
                     If_Property_Is_Default_Return_False(builder, valueProperty);
                 }
@@ -90,7 +90,7 @@ namespace Elementary.Properties.Assertions
             builder.Emit(OpCodes.Ldloc, scope);
         }
 
-        private static void If_Property_Is_Default_Return_False(ILGenerator builder, ValuePropertyCollectionValue property)
+        private static void If_Property_Is_Default_Return_False(ILGenerator builder, ValuePropertyScalar property)
         {
             // push the property vaue on the stack
             builder.Emit(OpCodes.Callvirt, property.Getter());
