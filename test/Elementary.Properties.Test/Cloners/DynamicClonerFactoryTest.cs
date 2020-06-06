@@ -2,7 +2,7 @@
 using Elementary.Properties.Cloners;
 using Xunit;
 
-namespace Elementary.Properties.Test.Clone
+namespace Elementary.Properties.Test.Cloners
 {
     public class DynamicClonerFactoryTest
     {
